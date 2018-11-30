@@ -22,15 +22,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.myehr.common.mybatis.MybatisUtil;
 import com.myehr.common.mybatis.Pager;
 import com.myehr.common.mybatis.Pagers;
 import com.myehr.common.util.ChangeCode;
 import com.myehr.common.util.GetRequestJsonUtils;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.ResultMap;
 import com.myehr.common.util.ResultMapNew;
 import com.myehr.common.util.SerializeUtil;
@@ -92,6 +88,7 @@ import com.myehr.pojo.sysUserRole.SysUserRole;
 import com.myehr.pojo.sysUserRole.SysUserRoleExample;
 import com.myehr.pojo.sysmenutree.SysMenuTree;
 import com.myehr.pojo.sysmenutree.TreeByCode;
+import com.myehr.service.RedisService;
 import com.myehr.service.field.FieldService;
 import com.myehr.service.formmanage.form.IButtonService;
 import com.myehr.service.formmanage.form.IFormService;
@@ -157,6 +154,10 @@ public class SysRoleListController {
 //	@Autowired
 	@Resource(name = "TMapperExt")
 	TMapperExt tMapperExt;
+	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
 	
 	@Autowired
 	private SysFormFolderTreeMapper treeMapper;
@@ -1134,9 +1135,7 @@ public class SysRoleListController {
 			sysUserOrgMapper.insert(example);
 		}
 		orgIds = orgIds.substring(0, orgIds.length()-1);
-		JedisFactory factory = new  JedisFactory(new JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set("orgIds_userId_"+userId,orgIds);
+    	redisService.set("orgIds_userId_"+userId,orgIds);
 		return "success";
 	}
 	
@@ -1395,12 +1394,11 @@ public class SysRoleListController {
 			List<SysFormColumn> columns = sysFormColumnExpandMapper.queryColumnsByFormIdAndUserIdAll(formId,userId);
 			List<Map> buttons = buttonService.queryFormButtonWithUserId(formId,userId);
 			
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	jedis.set(("columnPower_"+formId).getBytes(), SerializeUtil.serializeList(columns));
+		
+			redisService.set(("columnPower_"+formId).getBytes(), SerializeUtil.serializeList(columns));
 	    	
 	    	for (int j = 0; j < buttons.size(); j++) {
-	    		jedis.set(("button_"+userId+"_"+formId).getBytes(), SerializeUtil.serializeList(columns));
+	    		redisService.set(("button_"+userId+"_"+formId).getBytes(), SerializeUtil.serializeList(columns));
 			}
 		}
 		

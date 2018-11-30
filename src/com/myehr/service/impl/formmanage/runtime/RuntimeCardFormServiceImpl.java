@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -15,15 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.myehr.common.exception.DcfException;
 import com.myehr.common.mybatis.MybatisUtil;
 import com.myehr.common.mybatis.Pager;
 import com.myehr.common.util.ChangeCode;
 import com.myehr.common.util.FormConfigResultMap;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.SpringContextUtils;
 import com.myehr.pojo.formmanage.cache.FormParamConstants;
 import com.myehr.pojo.formmanage.cache.SysDatepickerCache;
@@ -35,6 +32,7 @@ import com.myehr.pojo.formmanage.cache.SysFormconfigCache;
 import com.myehr.pojo.formmanage.cache.SysGridFilterCache;
 import com.myehr.pojo.formmanage.cache.UserObject;
 import com.myehr.pojo.formmanage.form.SysFormColumn;
+import com.myehr.service.RedisService;
 import com.myehr.service.formmanage.form.ISysformconfigService;
 import com.myehr.service.formmanage.form.IsysFormColumnService;
 import com.myehr.service.formmanage.runtime.IRuntimeCardFormService;
@@ -46,6 +44,10 @@ public class RuntimeCardFormServiceImpl  implements IRuntimeCardFormService  {
 	
 	@Autowired
 	private ISysformconfigService sysformconfigService;
+	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
 	
 	/**
 	 * 初始化卡片表单数据
@@ -113,9 +115,7 @@ public class RuntimeCardFormServiceImpl  implements IRuntimeCardFormService  {
 			if (form.getPojoform().getPowerSql()!=null) {
 				String pSql = form.getPojoform().getPowerSql();
 				if (form.getPojoform().getIsOrgPower()!=null&&form.getPojoform().getIsOrgPower().equals("Y")) {
-					JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-			    	Jedis jedis = factory.getJedis(); 
-			    	String orgIds = jedis.get("orgIds_userId_"+userId);
+			    	String orgIds = redisService.get("orgIds_userId_"+userId);
 			    	if (orgIds==null) {
 				    	pSql = pSql.replace("[re:orgIds]","");
 					} else {
@@ -336,9 +336,7 @@ public class RuntimeCardFormServiceImpl  implements IRuntimeCardFormService  {
 			if (form.getPojoform().getPowerSql()!=null&&!form.getPojoform().getPowerSql().equals("")) {
 				String pSql = form.getPojoform().getPowerSql();
 				if (form.getPojoform().getIsOrgPower()!=null&&form.getPojoform().getIsOrgPower().equals("Y")) {
-					JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-			    	Jedis jedis = factory.getJedis(); 
-			    	String orgIds = jedis.get("orgIds_userId_"+userId);
+			    	String orgIds = redisService.get("orgIds_userId_"+userId);
 			    	pSql = pSql.replace("[re:orgIds]",orgIds);
 				}
 				while(pSql.indexOf("[s:userId]")>=0){

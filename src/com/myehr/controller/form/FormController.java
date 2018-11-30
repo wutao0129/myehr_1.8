@@ -1,5 +1,6 @@
 package com.myehr.controller.form;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,6 +40,7 @@ import com.myehr.common.exception.DcfException;
 import com.myehr.common.mybatis.DcfReponse;
 import com.myehr.common.mybatis.MybatisUtil;
 import com.myehr.common.mybatis.Pager;
+import com.myehr.common.util.AuthorizationUtil;
 import com.myehr.common.util.ChangeCode;
 import com.myehr.common.util.CreateFileUtil;
 import com.myehr.common.util.DataSign;
@@ -1153,7 +1155,13 @@ public class FormController {
 				}
 			}
 			logger.info("**********************************标签111********"+(new Date().getTime()-start)/1000+"S******************************************");
-			if (sb==null||statue.equals("")||statue.equals("N")) {
+			
+			//sb =  null;
+			
+			String checkPath = param.getPath()+sb;
+			
+			logger.info("++++++sb:"+sb+";statue:"+statue+";checkPath:"+checkPath+"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+			if (sb==null||statue.equals("")||statue.equals("N") || !new File(checkPath).exists()) {
 				if(aa.getFormDefLayoutType().equals("1")){
 					formService.buildCardForm(aa,param,formType,actNodePropertiesExpand,userId);
 					
@@ -1398,6 +1406,7 @@ public class FormController {
 			}*/
 			logger.info("**********************************标签33333333333*******"+(new Date().getTime()-start)/1000+"S******************************************");
 			logger.info(sb);
+			
 			mv = new ModelAndView("forward:/jsp/formbuild/"+sb);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -2349,7 +2358,7 @@ public class FormController {
 			CustomerContextHolder.setContextType(CustomerContextHolder.session_factory_sqlserver);
 //			String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
 //			path = path+"webapps/myehr/WEB-INF/classes/sysparam.properties";
-			String path = "E:/workspace/Myeclipse/.metadata/.me_tcat/webapps/myehr/WEB-INF/classes/sysparam.properties";
+			String path =  Thread.currentThread().getContextClassLoader().getResource("/").getPath()+"sysparam.properties";
 			String userId = request.getSession().getAttribute("userid")+"";
 			String baseExclePath = GetDBPropertiesValue.readValue(path,"excel.exportTempPath");
 			CreateFileUtil.createDir(baseExclePath);

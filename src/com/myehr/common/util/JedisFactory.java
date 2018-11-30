@@ -1,5 +1,7 @@
 package com.myehr.common.util;
 
+import java.io.File;
+
 import  redis.clients.jedis.Jedis;  
 import  redis.clients.jedis.JedisPool;  
 import  redis.clients.jedis.JedisPoolConfig;  
@@ -67,8 +69,9 @@ public   class  JedisFactory {
     
     public static String getKeyProperties(String keyName){
 //		String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
-//		path = path+"webapps/myehr/WEB-INF/classes/redis.properties";
-    	String path = "E:/workspace/Myeclipse/.metadata/.me_tcat/webapps/myehr/WEB-INF/classes/redis.properties";
+//		path = path+"webapps/myehr/WEB-INF/classes/redis.prop\rties";
+    	String path = Thread.currentThread().getContextClassLoader().getResource("/").getPath()+File.separator + "redis.properties";
+    			//"F:\\myh\\myeclipseWorkSpace\\myehr_1.8\\config\\redis.properties";
 		//             E:/workspace/Myeclipse/myehr_0_SQLSERVERwebapps/myehr/WEB-INF/classes/redis.properties
 		String keyValue = GetDBPropertiesValue.readValue(path,keyName);
 		return keyValue;
@@ -77,8 +80,9 @@ public   class  JedisFactory {
     public Jedis getJedis() {
     	JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());
     	String redisIp = getKeyProperties("redis.ip");
+    	int  redisPort =Integer.parseInt( getKeyProperties("redis.port"));
     	String selectdb = getKeyProperties("redis.dbindex");
-    	Jedis jedis = factory.getJedisInstance(redisIp); 
+    	Jedis jedis = factory.getJedisInstance(redisIp,redisPort); 
     	jedis.select(Integer.valueOf(selectdb)); 
     	return jedis;
 	}

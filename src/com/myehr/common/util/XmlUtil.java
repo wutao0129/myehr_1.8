@@ -34,7 +34,7 @@ public class XmlUtil {
             // 创建解析器  
             SAXReader reader = new SAXReader();  
             // 调用读方法，得到Document  
-            String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
+            String path = System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
     		path = path+"webapps/myehr/WEB-INF/classes/spring/applicationContext.xml";
             Document doc = reader.read(path); 
               

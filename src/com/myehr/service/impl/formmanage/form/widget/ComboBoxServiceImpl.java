@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -19,9 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.servlet.ModelAndView;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
 
 import com.myehr.pojo.activiti.ActReModel;
 import com.myehr.pojo.activiti.ActReModelExample;
@@ -78,7 +76,6 @@ import com.myehr.pojo.sysRole.SysUserOrg;
 import com.myehr.pojo.sysRole.SysUserOrgExample;
 import com.myehr.pojo.sysuser.SysOnlineUserExample;
 import com.myehr.common.mybatis.MybatisUtil;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.SerializeUtil;
 import com.myehr.common.util.SpringContextUtils;
 import com.myehr.mapper.entity.SysEntityMapper;
@@ -108,7 +105,7 @@ import com.myehr.mapper.sysRole.SysUserOrgMapper;
 import com.myehr.mapper.sysdict.SysDictEntryMapper;
 import com.myehr.mapper.sysdict.SysDictTypeMapper;
 import com.myehr.mapper.sysuser.SysOnlineUserMapper;
-
+import com.myehr.service.RedisService;
 import com.myehr.service.formmanage.form.IFormService;
 import com.myehr.service.formmanage.form.ISysformconfigService;
 import com.myehr.service.formmanage.form.IsysFormColumnService;
@@ -207,6 +204,10 @@ public class ComboBoxServiceImpl implements IComboBoxService {
 	private HttpSession session;  
 	@Autowired
 	private SysSystemParamMapper paramMapper;
+	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
 	
 	@Override
 	public SysFormCombobox queryComboBoxInfoByColumnId(String columnId) {
@@ -452,9 +453,8 @@ public class ComboBoxServiceImpl implements IComboBoxService {
 				orgIds += obj.getOrgId()+",";
 			}
 			orgIds = orgIds.substring(0, orgIds.length()-1);
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	jedis.set("orgIds_userId_"+userId,orgIds);
+		
+	    	redisService.set("orgIds_userId_"+userId,orgIds);
 		}
 	}
 
@@ -467,9 +467,8 @@ public class ComboBoxServiceImpl implements IComboBoxService {
 		for (SysSystemParam sysSystemParam : params) {
 			map.put(sysSystemParam.getSysParamCode(), sysSystemParam);
 		}
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("sysSystemParam").getBytes(), SerializeUtil.serialize(map));
+	
+		redisService.set(("sysSystemParam").getBytes(), SerializeUtil.serialize(map));
 	}
 
 	@Override

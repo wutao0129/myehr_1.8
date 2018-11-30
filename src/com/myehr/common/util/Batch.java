@@ -55,8 +55,9 @@ public class Batch {
   
     public static Connection getConnection() {// 数据库连接
     	Connection con = null;
-    	String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
-		path = path+"webapps/myehr/WEB-INF/classes/db.properties";
+    	//String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
+		//path = path+"webapps/myehr/WEB-INF/classes/db.properties";
+		String path = Thread.currentThread().getContextClassLoader().getResource("/").getPath()+"db.properties";
     	//String path = "E:/myehr/Myeclipse/myeclipse/apache-tomcat-6.0.45/webapps/myehr/WEB-INF/classes/db.properties";
     	//String path = "E:/workspace/Myeclipse/.metadata/.me_tcat/webapps/myehr/WEB-INF/classes/db.properties";
     	//String path = "E:/myehr/Myeclipse/myeclipse/apache-tomcat-6.0.45/webapps/myehr/WEB-INF/classes/db.properties";

@@ -4259,5 +4259,5 @@ function exportData(fieldArray,formId){
 </body>
 </html>
 <%
-System.out.println("jsp消耗时间*****:"+(new Date().getTime()-d.getTime())/1000));
+System.out.println("jsp消耗时间*****:"+(new Date().getTime()-d.getTime())/1000);
 %>

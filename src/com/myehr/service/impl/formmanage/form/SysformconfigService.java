@@ -1,11 +1,14 @@
 package com.myehr.service.impl.formmanage.form;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.Resource;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -14,11 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.myehr.common.mybatis.MybatisUtil;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.SerializeUtil;
 import com.myehr.common.util.datasource.CustomerContextHolder;
 import com.myehr.mapper.activiti.ActHiProcinstMapper;
@@ -183,6 +182,7 @@ import com.myehr.pojo.sysuser.SysUserExample;
 import com.myehr.pojo.sysuser.SysUserExpand;
 import com.myehr.pojo.task.SysTask;
 import com.myehr.pojo.task.SysTaskExample;
+import com.myehr.service.RedisService;
 import com.myehr.service.formmanage.form.IFilterService;
 import com.myehr.service.formmanage.form.ISysformconfigService;
 import com.sun.org.apache.bcel.internal.generic.NEW;
@@ -342,6 +342,10 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Autowired
 	private SysTaskMapper sysTaskMapper;
 	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
+	
 	private static Map<String,SysFormconfigCache> formMap  =new ConcurrentHashMap<String, SysFormconfigCache>();
 	private static Map<String,Map> entityMap = new ConcurrentHashMap<String, Map>();
 	private static Map<String,JSONArray> dictsGridMap = new ConcurrentHashMap<String, JSONArray>();
@@ -461,10 +465,7 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<SysDictEntry> getDictEntrys(String dictTypeCode) throws Exception {
-		
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysDictEntrysByte = jedis.get(("dict_"+dictTypeCode).getBytes());
+    	byte[] sysDictEntrysByte = redisService.get(("dict_"+dictTypeCode).getBytes());
 		if(sysDictEntrysByte==null){
 		// TODO Auto-generated method stub
 			SysDictTypeExample example = new SysDictTypeExample();
@@ -478,7 +479,7 @@ public class SysformconfigService implements   ISysformconfigService {
 				entryExample.setOrderByClause("DICT_ENTRY_SORT");
 				List<SysDictEntry> entrys = sysDictEntryMapper.selectByExample(entryExample);
 				if(entrys.size()>0){
-					jedis.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
+					redisService.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
 				}
 		    	return entrys;
 			}else {
@@ -497,9 +498,7 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setDictEntrysByTypeCode(int dictTypeId) throws Exception {
 		SysDictType dictType1 = sysDictTypeMapper.selectByPrimaryKey(dictTypeId);
 		String dictTypeCode = dictType1.getDictTypeCode();
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysDictEntrysByte = jedis.get(("dict_"+dictTypeCode).getBytes());
+    	byte[] sysDictEntrysByte = redisService.get(("dict_"+dictTypeCode).getBytes());
 		// TODO Auto-generated method stub
 		SysDictTypeExample example = new SysDictTypeExample();
 		example.or().andDictTypeCodeEqualTo(dictTypeCode);
@@ -512,7 +511,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			entryExample.setOrderByClause("DICT_ENTRY_SORT");
 			List<SysDictEntry> entrys = sysDictEntryMapper.selectByExample(entryExample);
 			if(entrys.size()>0){
-				jedis.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
+				redisService.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
 			}
 		}
 	}
@@ -522,9 +521,8 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setDictEntrysByTypeCode(String dictTypeCode) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysDictEntrysByte = jedis.get(("dict_"+dictTypeCode).getBytes());
+
+    	byte[] sysDictEntrysByte = redisService.get(("dict_"+dictTypeCode).getBytes());
 		// TODO Auto-generated method stub
 		SysDictTypeExample example = new SysDictTypeExample();
 		example.or().andDictTypeCodeEqualTo(dictTypeCode);
@@ -537,7 +535,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			entryExample.setOrderByClause("DICT_ENTRY_SORT");
 			List<SysDictEntry> entrys = sysDictEntryMapper.selectByExample(entryExample);
 			if(entrys.size()>0){
-				jedis.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
+				redisService.set(("dict_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(entrys));
 			}
 		}
 	}
@@ -547,9 +545,7 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<SysField> getSysFields(String entityCode) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysFieldsByte = jedis.get(("entity_"+entityCode).getBytes());
+    	byte[] sysFieldsByte = redisService.get(("entity_"+entityCode).getBytes());
 		if(sysFieldsByte==null){
 		// TODO Auto-generated method stub
 			SysEntityExample example = new SysEntityExample();
@@ -563,7 +559,7 @@ public class SysformconfigService implements   ISysformconfigService {
 				fieldExample.setOrderByClause("FIELD_SORT");
 				List<SysField> fields = sysFieldMapper.selectByExample(fieldExample);
 				
-		    	jedis.set(("entity_"+entityCode).getBytes(), SerializeUtil.serializeList(fields));
+				redisService.set(("entity_"+entityCode).getBytes(), SerializeUtil.serializeList(fields));
 		    	return fields;
 			}else {
 				return null;
@@ -580,16 +576,14 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<SysMenu> getSysMenus(BigDecimal roleId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysMenusByte = jedis.get(("menu_"+roleId).getBytes());
+    	byte[] sysMenusByte = redisService.get(("menu_"+roleId).getBytes());
 		if(sysMenusByte==null){
 		// TODO Auto-generated method stub
 			SysMenuRoleExample example = new SysMenuRoleExample();
 			example.or().andRoleIdEqualTo(roleId);
 			List<SysMenu> menus = sysMenuMapperExpand.queryMenusByRoleId(roleId+"");
 			if (menus.size()>0) {
-		    	jedis.set(("menu_"+roleId).getBytes(), SerializeUtil.serializeList(menus));
+				redisService.set(("menu_"+roleId).getBytes(), SerializeUtil.serializeList(menus));
 		    	return menus;
 			}else {
 				return null;
@@ -608,15 +602,14 @@ public class SysformconfigService implements   ISysformconfigService {
 	public SysFormconfigCache getForm(String formId) throws Exception {
 		try {
 			if(formMap.get("formCacheInfo"+formId)==null){
-				JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-		    	Jedis jedis = factory.getJedis();
-		    	byte[] sysFormInfoByte = jedis.get(("formCacheInfo"+formId).getBytes());
+		    	byte[] sysFormInfoByte = redisService.get(("formCacheInfo"+formId).getBytes());
+		  
 				if(sysFormInfoByte==null){
 					//先塞map缓存
 					SysFormconfigCache formcache = new SysFormconfigCache(formId,this);
 					formMap.put("formCacheInfo"+formId,formcache);
 					//再塞redis缓存serialize
-					jedis.set(("formCacheInfo"+formId).getBytes(), SerializeUtil.serialize(formcache));
+					redisService.set(("formCacheInfo"+formId).getBytes(), SerializeUtil.serialize(formcache));
 				    return formcache;
 				}else {
 					SysFormconfigCache formcache =(SysFormconfigCache) SerializeUtil.unserialize(sysFormInfoByte);
@@ -629,6 +622,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 			return null;
 		}
 		
@@ -806,8 +800,6 @@ public class SysformconfigService implements   ISysformconfigService {
 		dictTypeExample.or().andDictTypeCodeEqualTo(dictTypeCode);
 		SysDictType dictType = sysDictTypeMapper.selectByExample(dictTypeExample).get(0);
 		int dictTypeId = dictType.getDictTypeId();
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
     	Map nameMap = new HashMap(); 
 		Map valueMap = new HashMap(); 
 		if (type.equals("dict")) {
@@ -824,9 +816,9 @@ public class SysformconfigService implements   ISysformconfigService {
 				nameMap.put(sysDictEntry.getDictEntryName(), sysDictEntry.getDictEntryCode());
 				valueMap.put(sysDictEntry.getDictEntryCode(), sysDictEntry.getDictEntryName());
 			}
-	    	jedis.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(rs));
-	    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
-	    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
+			redisService.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(rs));
+			redisService.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
+			redisService.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
 	    	dictValueMap.put(("dictTypeCode_"+dictTypeCode+"ForValuemap"),valueMap);
 	    	dictNameMap.put(("dictTypeCode_"+dictTypeCode+"ForNamemap"),nameMap);
 			dictsCardTypeMap.put("dictTypeCode_"+dictTypeCode,rs);
@@ -842,9 +834,9 @@ public class SysformconfigService implements   ISysformconfigService {
 				nameMap.put(map.get("DICTENTRY")+"",map.get("DICTVALUE")+"");
 				valueMap.put(map.get("DICTVALUE")+"",map.get("DICTENTRY")+"");
 			}
-	    	jedis.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(datas));
-	    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
-	    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
+			redisService.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(datas));
+			redisService.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
+			redisService.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
 	    	dictValueMap.put(("dictTypeCode_"+dictTypeCode+"ForValuemap"),valueMap);
 	    	dictNameMap.put(("dictTypeCode_"+dictTypeCode+"ForNamemap"),nameMap);
 			dictsCardTypeMap.put("dictTypeCode_"+dictTypeCode,datas);
@@ -859,9 +851,9 @@ public class SysformconfigService implements   ISysformconfigService {
 		if(dictNameMap.get("dictTypeCode_"+dictTypeCode+"ForNamemap")!=null){
 			return dictNameMap.get(("dictTypeCode_"+dictTypeCode+"ForNamemap"));
 		}else {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	byte[] dictMapByte = jedis.get(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes());
+			  
+	    	 
+	    	byte[] dictMapByte = redisService.get(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes());
 	    	if (dictMapByte!=null) {
 	    		Map map =(Map) SerializeUtil.unserialize(dictMapByte);
 	    		dictNameMap.put(("dictTypeCode_"+dictTypeCode+"ForNamemap"),map);
@@ -881,7 +873,7 @@ public class SysformconfigService implements   ISysformconfigService {
 							for (Map map : rs) {
 								nameMap.put(map.get("DICTENTRY")+"",map.get("DICTVALUE")+"");
 							}
-					    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
+					    	redisService.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
 					    	dictNameMap.put(("dictTypeCode_"+dictTypeCode+"ForNamemap"),nameMap);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -895,7 +887,7 @@ public class SysformconfigService implements   ISysformconfigService {
 						for (SysDictEntry sysDictEntry : entries) {
 							nameMap.put(sysDictEntry.getDictEntryName(),sysDictEntry.getDictEntryCode());
 						}
-				    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
+				    	redisService.set(("dictTypeCode_"+dictTypeCode+"ForNamemap").getBytes(), SerializeUtil.serialize(nameMap));//map格式缓存
 				    	dictNameMap.put(("dictTypeCode_"+dictTypeCode+"ForNamemap"),nameMap);
 					}
 					return nameMap;
@@ -913,9 +905,9 @@ public class SysformconfigService implements   ISysformconfigService {
 		if(dictValueMap.get("dictTypeCode_"+dictTypeCode+"ForValuemap")!=null){
 			return dictValueMap.get(("dictTypeCode_"+dictTypeCode+"ForValuemap"));
 		}else {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	byte[] dictMapByte = jedis.get(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes());
+			  
+	    	 
+	    	byte[] dictMapByte = redisService.get(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes());
 	    	if (dictMapByte!=null) {
 	    		Map map =(Map) SerializeUtil.unserialize(dictMapByte);
 	    		dictValueMap.put(("dictTypeCode_"+dictTypeCode+"ForValuemap"),map);
@@ -935,7 +927,7 @@ public class SysformconfigService implements   ISysformconfigService {
 							for (Map map : rs) {
 								valueMap.put(map.get("DICTVALUE")+"",map.get("DICTENTRY")+"");
 							}
-					    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
+					    	redisService.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
 					    	dictValueMap.put(("dictTypeCode_"+dictTypeCode+"ForValuemap"),valueMap);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -949,7 +941,7 @@ public class SysformconfigService implements   ISysformconfigService {
 						for (SysDictEntry sysDictEntry : entries) {
 							valueMap.put(sysDictEntry.getDictEntryCode(),sysDictEntry.getDictEntryName());
 						}
-				    	jedis.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
+				    	redisService.set(("dictTypeCode_"+dictTypeCode+"ForValuemap").getBytes(), SerializeUtil.serialize(valueMap));//map格式缓存
 				    	dictValueMap.put(("dictTypeCode_"+dictTypeCode+"ForValuemap"),valueMap);
 					}
 					return valueMap;
@@ -965,9 +957,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public List<DictData> getCardDictDataByDictTypeCode(String dictTypeCode,String type) throws Exception {
 		if(dictsCardTypeMap.get("dictTypeCode_"+dictTypeCode)==null){
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	byte[] dictInfoByte = jedis.get(("dictTypeCode_"+dictTypeCode).getBytes());
+			  
+	    	 
+	    	byte[] dictInfoByte = redisService.get(("dictTypeCode_"+dictTypeCode).getBytes());
 	    	if (dictInfoByte!=null) {
 	    		List<DictData> rs =(List<DictData>) SerializeUtil.unserializeList(dictInfoByte);
 	    		dictsCardTypeMap.put("dictTypeCode_"+dictTypeCode,rs);
@@ -989,7 +981,7 @@ public class SysformconfigService implements   ISysformconfigService {
 							data.setCode(sysDictEntry.getDictEntryCode());
 							rs.add(data);
 						}
-						jedis.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(rs));
+						redisService.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(rs));
 						dictsCardTypeMap.put("dictTypeCode_"+dictTypeCode,rs);
 						return dictsCardTypeMap.get("dictTypeCode_"+dictTypeCode);
 					} else if(type.equals("sql")) {
@@ -1003,7 +995,7 @@ public class SysformconfigService implements   ISysformconfigService {
 								data.setCode(map.get("DICTVALUE")+"");
 								datas.add(data);
 							}
-							jedis.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(datas));
+							redisService.set(("dictTypeCode_"+dictTypeCode).getBytes(), SerializeUtil.serializeList(datas));
 							dictsCardTypeMap.put("dictTypeCode_"+dictTypeCode,datas);
 							return dictsCardTypeMap.get("dictTypeCode_"+dictTypeCode);
 						}else {
@@ -1035,9 +1027,9 @@ public class SysformconfigService implements   ISysformconfigService {
 			data.setCode(sysDictEntry.getDictEntryCode());
 			rs.add(data);
 		}
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("dictTypeId_"+dictTypeId).getBytes(), SerializeUtil.serializeList(rs));
+		  
+    	 
+    	redisService.set(("dictTypeId_"+dictTypeId).getBytes(), SerializeUtil.serializeList(rs));
 		dictsCardTypeMap.put("dictTypeId_"+dictTypeId,rs);
 	}
 	/**
@@ -1055,9 +1047,9 @@ public class SysformconfigService implements   ISysformconfigService {
 			data.setCode(map.get("DICTVALUE")+"");
 			datas.add(data);
 		}
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("dictTypeId_"+dictTypeId).getBytes(), SerializeUtil.serializeList(rs));
+		  
+    	 
+    	redisService.set(("dictTypeId_"+dictTypeId).getBytes(), SerializeUtil.serializeList(rs));
 		dictsCardTypeMap.put("dictTypeId_"+dictTypeId,datas);
 	}
 	
@@ -1138,10 +1130,10 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setForm(String formId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
     	SysFormconfigCache formcache = new SysFormconfigCache(formId,this);
-    	jedis.set(("formCacheInfo"+formId).getBytes(), SerializeUtil.serialize(formcache));
+    	redisService.set(("formCacheInfo"+formId).getBytes(), SerializeUtil.serialize(formcache));
 		formMap.put("formCacheInfo"+formId,formcache);//formCacheInfo
 	}
 	
@@ -1152,9 +1144,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setColumn(String columnId) throws Exception {
 		SysFormColumn formColumn = sysFormColumnMapper.selectByPrimaryKey(new BigDecimal(columnId));
 		//columnMap.put(columnId,formColumn);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("column"+columnId).getBytes(), SerializeUtil.serialize(formColumn));
+		  
+    	 
+    	redisService.set(("column"+columnId).getBytes(), SerializeUtil.serialize(formColumn));
 	}
 	
 	/**
@@ -1164,9 +1156,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setButton(String buttonId) throws Exception {
 		SysFormButton formButton = sysFormButtonMapper.selectByPrimaryKey(new BigDecimal(buttonId));
 		//buttonMap.put(buttonId,formButton);
-		JedisFactory factory = new  JedisFactory(new JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("button"+buttonId).getBytes(), SerializeUtil.serialize(formButton));
+		  
+    	 
+    	redisService.set(("button"+buttonId).getBytes(), SerializeUtil.serialize(formButton));
 	}
 	/**
 	 * 重新加载通过表单ID存字段缓存
@@ -1180,12 +1172,12 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.setOrderByClause("FORM_COLUMN_POSITION_SORT");
 			example.setOrderByClause("FORM_COLUMN_SORT");
 			List<SysFormColumn> formColumns = sysFormColumnMapper.selectByExample(example);
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
+			  
+	    	 
 			if(formColumns.size()>0){
-		    	jedis.set(("column_"+formId).getBytes(), SerializeUtil.serializeList(formColumns));
+		    	redisService.set(("column_"+formId).getBytes(), SerializeUtil.serializeList(formColumns));
 			}else {
-				jedis.del(("column_"+formId).getBytes());
+				redisService.del(("column_"+formId).getBytes());
 			}
 	}
 	
@@ -1196,9 +1188,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setFormInfos(List<SysFormconfigWithBLOBs> forms) throws Exception {
 		for (int i = 0; i < forms.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis(); 
-	    	jedis.set(("formInfo"+forms.get(i).getFormDefId()).getBytes(), SerializeUtil.serialize(forms.get(i)));
+			  
+	    	 
+	    	redisService.set(("formInfo"+forms.get(i).getFormDefId()).getBytes(), SerializeUtil.serialize(forms.get(i)));
 		}
 	}
 	
@@ -1207,11 +1199,11 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormconfigWithBLOBs getFormInfo(String formId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		SysFormconfigWithBLOBs form = sysFormconfigMapper.selectByPrimaryKey(new BigDecimal(formId));
 		if (form!=null) {
-	    	jedis.set(("formInfo"+formId).getBytes(), SerializeUtil.serialize(form));
+	    	redisService.set(("formInfo"+formId).getBytes(), SerializeUtil.serialize(form));
 	    	return form;
 		}else {
 			return null;
@@ -1227,8 +1219,8 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormconfigExample example = new  SysFormconfigExample();
 		example.or().andFormDefIdEqualTo(new BigDecimal(formId));
 		List<SysFormconfig> sysformconfig = sysFormconfigMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		return null;
 	}
 	
@@ -1237,16 +1229,16 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public C11 getEmpPhotoInfo(String empId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] photoInfoByte = jedis.get(("Emp_Photo"+empId).getBytes());
+		  
+    	
+    	byte[] photoInfoByte = redisService.get(("Emp_Photo"+empId).getBytes());
 		if(photoInfoByte==null){
 		// TODO Auto-generated method stub
 			C11Example example = new C11Example();
 			example.or().andA0188EqualTo(Integer.valueOf(empId));
 			List<C11> c11s = cMapper.selectByExampleWithBLOBs(example);
 			if (c11s.size()>0) {
-		    	jedis.set(("Emp_Photo"+empId).getBytes(), SerializeUtil.serialize(c11s.get(0)));
+		    	redisService.set(("Emp_Photo"+empId).getBytes(), SerializeUtil.serialize(c11s.get(0)));
 		    	return c11s.get(0);
 			}else {
 				return null;
@@ -1261,13 +1253,13 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setEmpPhotoInfo(String empId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		C11Example example = new C11Example();
 		example.or().andA0188EqualTo(Integer.valueOf(empId));
 		List<C11> c11s = cMapper.selectByExampleWithBLOBs(example);
 		if (c11s.size()>0) {
-	    	jedis.set(("Emp_Photo"+empId).getBytes(), SerializeUtil.serialize(c11s.get(0)));
+	    	redisService.set(("Emp_Photo"+empId).getBytes(), SerializeUtil.serialize(c11s.get(0)));
 		}
 	}
 	
@@ -1331,9 +1323,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setFormColumns(List<SysFormColumn> columns) throws Exception {
 		for (int i = 0; i < columns.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("column_"+columns.get(i).getFormColumnId()).getBytes(), SerializeUtil.serialize(columns.get(i)));
+			  
+	    	
+	    	redisService.set(("column_"+columns.get(i).getFormColumnId()).getBytes(), SerializeUtil.serialize(columns.get(i)));
 		}
 	}
 	
@@ -1342,9 +1334,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormColumn getFormColumn(String columnId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] columnInfoByte = jedis.get(("columnInfo"+columnId).getBytes());
+		  
+    	 
+    	byte[] columnInfoByte = redisService.get(("columnInfo"+columnId).getBytes());
     	if (columnInfoByte!=null) {
     		SysFormColumn columnInfo =(SysFormColumn) SerializeUtil.unserialize(columnInfoByte);
     		return columnInfo;
@@ -1352,7 +1344,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			SysFormColumnExample example = new SysFormColumnExample();
 			example.or().andFormColumnIdEqualTo(new BigDecimal(columnId));
 			SysFormColumn formColumn = sysFormColumnMapper.selectByExample(example).get(0);
-	    	jedis.set(("columnInfo"+columnId).getBytes(), SerializeUtil.serialize(formColumn));
+	    	redisService.set(("columnInfo"+columnId).getBytes(), SerializeUtil.serialize(formColumn));
 	    	return formColumn;
 		}
 	}
@@ -1362,12 +1354,12 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormColumn getFormColumnReal(String columnId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormColumnExample example = new SysFormColumnExample();
 		example.or().andFormColumnIdEqualTo(new BigDecimal(columnId));
 		if(sysFormColumnMapper.selectByExample(example).size()>0){
-			jedis.set(("columnInfo"+columnId).getBytes(), SerializeUtil.serialize(sysFormColumnMapper.selectByExample(example).get(0)));
+			redisService.set(("columnInfo"+columnId).getBytes(), SerializeUtil.serialize(sysFormColumnMapper.selectByExample(example).get(0)));
 	    	return sysFormColumnMapper.selectByExample(example).get(0);
 		}else{
 			return null;
@@ -1440,9 +1432,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<SysFormButton> getFormButtons(BigDecimal formId,String userId) throws Exception {
-//		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-//    	Jedis jedis = factory.getJedis();
-//    	byte[] sysFormButtonByte = jedis.get(("formButton_"+formId).getBytes());
+//		  
+//    	
+//    	byte[] sysFormButtonByte = redisService.get(("formButton_"+formId).getBytes());
 //		if(sysFormButtonByte==null){
 //		// TODO Auto-generated method stub
 //			SysFormButtonExample example = new SysFormButtonExample();
@@ -1450,7 +1442,7 @@ public class SysformconfigService implements   ISysformconfigService {
 //			example.setOrderByClause("FORM_BUTTON_SORT");
 //			List<SysFormButton> formButtons = sysFormButtonMapper.selectByExample(example);
 //			if (formButtons.size()>0) {
-//		    	jedis.set(("formButton_"+formId).getBytes(), SerializeUtil.serializeList(formButtons));
+//		    	redisService.set(("formButton_"+formId).getBytes(), SerializeUtil.serializeList(formButtons));
 //		    	return formButtons;
 //			}else {
 //				return null;
@@ -1475,12 +1467,12 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setApproveId(String task,String userIds) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	if (userIds.length()>0) {
-	    	jedis.set(("approveUser_"+task).getBytes(), SerializeUtil.serialize(userIds));
+	    	redisService.set(("approveUser_"+task).getBytes(), SerializeUtil.serialize(userIds));
     	}else {
-    		jedis.del(("approveUser_"+task).getBytes());
+    		redisService.del(("approveUser_"+task).getBytes());
 		}
 	}
 	/**
@@ -1488,9 +1480,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String getApproveId(String task) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] userInfoByte = jedis.get(("approveUser_"+task).getBytes());
+		  
+    	
+    	byte[] userInfoByte = redisService.get(("approveUser_"+task).getBytes());
     	if (userInfoByte!=null) {
     		String userInfo = (String) SerializeUtil.unserialize(userInfoByte);
     		return userInfo;
@@ -1543,18 +1535,18 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public ActReModel getActModelByKey(String modelKey) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] actModelInfoByte = jedis.get(("ActModel_"+modelKey).getBytes());
+		  
+    	
+    	byte[] actModelInfoByte = redisService.get(("ActModel_"+modelKey).getBytes());
     	if (actModelInfoByte==null) {
         	ActReModelExample actReModelExample = new ActReModelExample();
     		actReModelExample.or().andKeyEqualTo(modelKey);
     		List<ActReModel> actReModel = actReModelMapper.selectByExample(actReModelExample);
         	if (actReModel.size()>0) {
-    	    	jedis.set(("ActModel_"+modelKey).getBytes(), SerializeUtil.serialize(actReModel.get(0)));
-    	    	actModelInfoByte = jedis.get(("ActModel_"+modelKey).getBytes());
+    	    	redisService.set(("ActModel_"+modelKey).getBytes(), SerializeUtil.serialize(actReModel.get(0)));
+    	    	actModelInfoByte = redisService.get(("ActModel_"+modelKey).getBytes());
         	}else {
-        		jedis.del(("ActModel_"+modelKey).getBytes());
+        		redisService.del(("ActModel_"+modelKey).getBytes());
     		}
 		}
     	return (ActReModel) SerializeUtil.unserialize(actModelInfoByte);
@@ -1566,8 +1558,8 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setNodeByModelId(String modelId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	ActNodePropertiesExpandExample example = new ActNodePropertiesExpandExample();//actNodePropertiesExpandMapper
     	example.or().andActModelIdEqualTo(modelId);
 		List<ActNodePropertiesExpand> nodes = actNodePropertiesExpandMapper.selectByExample(example);
@@ -1576,25 +1568,25 @@ public class SysformconfigService implements   ISysformconfigService {
 			map.put(actNodePropertiesExpand.getActNodeName(), actNodePropertiesExpand);
 		}
     	if (map.size()>0) {
-	    	jedis.set(("NodeExpand_"+modelId).getBytes(), SerializeUtil.serialize(map));
+	    	redisService.set(("NodeExpand_"+modelId).getBytes(), SerializeUtil.serialize(map));
     	}else {
-    		jedis.del(("NodeExpand_"+modelId).getBytes());
+    		redisService.del(("NodeExpand_"+modelId).getBytes());
 		}
     	
 		ActReModel actReModel = actReModelMapper.selectByPrimaryKey(modelId);
     	if (actReModel!=null) {
-	    	jedis.set(("ActModel_"+actReModel.getKey()).getBytes(), SerializeUtil.serialize(actReModel));
+	    	redisService.set(("ActModel_"+actReModel.getKey()).getBytes(), SerializeUtil.serialize(actReModel));
     	}else {
-    		jedis.del(("ActModel_"+actReModel.getKey()).getBytes());
+    		redisService.del(("ActModel_"+actReModel.getKey()).getBytes());
 		}
     	
     	ActReModelExample example2 = new ActReModelExample();
     	example2.or().andCategoryEqualTo(actReModel.getCategory());
     	List<ActReModel> models = actReModelMapper.selectByExample(example2);
     	if (models.size()>0) {
-	    	jedis.set(("ActModels_"+actReModel.getCategory()).getBytes(), SerializeUtil.serializeList(models));
+	    	redisService.set(("ActModels_"+actReModel.getCategory()).getBytes(), SerializeUtil.serializeList(models));
     	}else {
-    		jedis.del(("ActModels_"+actReModel.getCategory()).getBytes());
+    		redisService.del(("ActModels_"+actReModel.getCategory()).getBytes());
 		}
 	}
 	
@@ -1603,13 +1595,13 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonOrColumnByUserId(String formId,String userId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	List<SysFormColumn> columns = sysFormColumnExpandMapper.queryColumnsByFormIdAndUserId(formId,userId);
     	if (columns!=null&&columns.size()>0) {
-	    	jedis.set(("ColumnPower_"+formId+"_"+userId).getBytes(), SerializeUtil.serializeList(columns));
+	    	redisService.set(("ColumnPower_"+formId+"_"+userId).getBytes(), SerializeUtil.serializeList(columns));
     	}else {
-    		jedis.del(("ColumnPower_"+formId+"_"+userId).getBytes());
+    		redisService.del(("ColumnPower_"+formId+"_"+userId).getBytes());
 		}
 	}
 	
@@ -1618,15 +1610,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<SysFormColumn> getColumnPowerById(String formId,String userId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] columnsInfoByte = jedis.get(("ColumnPower_"+formId+"_"+userId).getBytes());
+		  
+    	
+    	byte[] columnsInfoByte = redisService.get(("ColumnPower_"+formId+"_"+userId).getBytes());
     	if (columnsInfoByte==null) {
     		List<SysFormColumn> columns = sysFormColumnExpandMapper.queryColumnsByFormIdAndUserId(formId,userId);
         	if (columns!=null&&columns.size()>0) {
-    	    	jedis.set(("ColumnPower_"+formId+"_"+userId).getBytes(), SerializeUtil.serializeList(columns));
+    	    	redisService.set(("ColumnPower_"+formId+"_"+userId).getBytes(), SerializeUtil.serializeList(columns));
         	}else {
-        		jedis.del(("ColumnPower_"+formId+"_"+userId).getBytes());
+        		redisService.del(("ColumnPower_"+formId+"_"+userId).getBytes());
     		}
         	return columns;
 		}
@@ -1638,9 +1630,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setActTitle(String modelKeyAndBusinessId,String title) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-	    jedis.set(("actTitle_"+modelKeyAndBusinessId).getBytes(), SerializeUtil.serialize(title));
+		  
+    	
+	    redisService.set(("actTitle_"+modelKeyAndBusinessId).getBytes(), SerializeUtil.serialize(title));
 	}
 	
 	/**
@@ -1648,9 +1640,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String getRoleIdsbyUserId(String userId) throws Exception {
-		/*JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] rolesInfoByte = jedis.get(("Roles_"+userId).getBytes());
+		/*  
+    	
+    	byte[] rolesInfoByte = redisService.get(("Roles_"+userId).getBytes());
     	if (rolesInfoByte==null) {
     		SysUserRoleExample example = new SysUserRoleExample();
     		example.or().andUserIdEqualTo(Integer.valueOf(userId));
@@ -1660,10 +1652,10 @@ public class SysformconfigService implements   ISysformconfigService {
         		for (SysUserRole sysUserRole : roles) {
         			roleIds += sysUserRole.getRoleId()+",";
 				}
-    	    	jedis.set(("Roles_"+userId).getBytes(), SerializeUtil.serialize(roleIds));
-    	    	rolesInfoByte = jedis.get(("Roles_"+userId).getBytes());
+    	    	redisService.set(("Roles_"+userId).getBytes(), SerializeUtil.serialize(roleIds));
+    	    	rolesInfoByte = redisService.get(("Roles_"+userId).getBytes());
         	}else {
-        		jedis.del(("Roles_"+userId).getBytes());
+        		redisService.del(("Roles_"+userId).getBytes());
     		}
 		}
     	return (String) SerializeUtil.unserialize(rolesInfoByte);*/
@@ -1683,8 +1675,8 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setRoleIdsbyUserId(String userId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		SysUserRoleExample example = new SysUserRoleExample();
 		example.or().andUserIdEqualTo(Integer.valueOf(userId));
 		List<SysUserRole> roles = sysUserRoleMapper.selectByExample(example);
@@ -1693,9 +1685,9 @@ public class SysformconfigService implements   ISysformconfigService {
     		for (SysUserRole sysUserRole : roles) {
     			roleIds += sysUserRole.getRoleId()+",";
 			}
-	    	jedis.set(("Roles_"+userId).getBytes(), SerializeUtil.serialize(roleIds));
+	    	redisService.set(("Roles_"+userId).getBytes(), SerializeUtil.serialize(roleIds));
     	}else {
-    		jedis.del(("Roles_"+userId).getBytes());
+    		redisService.del(("Roles_"+userId).getBytes());
 		}
 	}
 	
@@ -1704,18 +1696,18 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String getActTitle(String modelKey,String businessId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] titleInfoByte = jedis.get(("actTitle_"+modelKey+businessId).getBytes());
+		  
+    	
+    	byte[] titleInfoByte = redisService.get(("actTitle_"+modelKey+businessId).getBytes());
     	if (titleInfoByte==null) {
     		SysActTitleExample example = new SysActTitleExample();
     		example.or().andBusinessidEqualTo(Long.valueOf(businessId)).andModelKeyEqualTo(modelKey);
     		List<SysActTitle> actTitles = actTitleMapper.selectByExample(example);
         	if (actTitles.size()>0) {
-    	    	jedis.set(("actTitle_"+modelKey+businessId).getBytes(), SerializeUtil.serialize(actTitles.get(0).getTitle()));
-    	    	titleInfoByte = jedis.get(("actTitle_"+modelKey+businessId).getBytes());
+    	    	redisService.set(("actTitle_"+modelKey+businessId).getBytes(), SerializeUtil.serialize(actTitles.get(0).getTitle()));
+    	    	titleInfoByte = redisService.get(("actTitle_"+modelKey+businessId).getBytes());
         	}else {
-        		jedis.del(("actTitle_"+modelKey+businessId).getBytes());
+        		redisService.del(("actTitle_"+modelKey+businessId).getBytes());
     		}
 		}
     	return (String) SerializeUtil.unserialize(titleInfoByte);
@@ -1726,18 +1718,18 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public List<ActReModel> getActModelsByCode(String code) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] actModelsInfoByte = jedis.get(("ActModels_"+code).getBytes());
+		  
+    	
+    	byte[] actModelsInfoByte = redisService.get(("ActModels_"+code).getBytes());
     	if (actModelsInfoByte==null) {
     		ActReModelExample example2 = new ActReModelExample();
         	example2.or().andCategoryEqualTo(code);
         	List<ActReModel> models = actReModelMapper.selectByExample(example2);
-        	jedis.set(("ActModels_"+code).getBytes(), SerializeUtil.serializeList(models));
+        	redisService.set(("ActModels_"+code).getBytes(), SerializeUtil.serializeList(models));
         	if (models.size()>0) {
-    	    	jedis.set(("ActModels_"+code).getBytes(), SerializeUtil.serializeList(models));
+    	    	redisService.set(("ActModels_"+code).getBytes(), SerializeUtil.serializeList(models));
         	}else {
-        		jedis.del(("ActModels_"+code).getBytes());
+        		redisService.del(("ActModels_"+code).getBytes());
     		}
 		}
     	return (List<ActReModel>) SerializeUtil.unserializeList(actModelsInfoByte);
@@ -1748,18 +1740,18 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public ActHiProcinst getActHiProcinstByPid(String pid) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-		byte[] actHiProcinstInfoByte = jedis.get(("ActHiProcinst_"+pid).getBytes());
+		  
+    	
+		byte[] actHiProcinstInfoByte = redisService.get(("ActHiProcinst_"+pid).getBytes());
     	if (actHiProcinstInfoByte==null) {
         	ActHiProcinstExample example = new ActHiProcinstExample();
         	example.or().andProcInstIdEqualTo(pid);
     		List<ActHiProcinst> list = actHiProcinstMapper.selectByExample(example);
         	if (list.size()>0) {
-    	    	jedis.set(("ActHiProcinst_"+pid).getBytes(), SerializeUtil.serialize(list.get(0)));
-    	    	actHiProcinstInfoByte = jedis.get(("ActHiProcinst_"+pid).getBytes());
+    	    	redisService.set(("ActHiProcinst_"+pid).getBytes(), SerializeUtil.serialize(list.get(0)));
+    	    	actHiProcinstInfoByte = redisService.get(("ActHiProcinst_"+pid).getBytes());
         	}else {
-        		jedis.del(("ActHiProcinst_"+pid).getBytes());
+        		redisService.del(("ActHiProcinst_"+pid).getBytes());
     		}
 		}
     	return (ActHiProcinst) SerializeUtil.unserialize(actHiProcinstInfoByte);
@@ -1770,9 +1762,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public Map getNodeByModelId(String modelId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] nodeExpandInfoByte = jedis.get(("NodeExpand_"+modelId).getBytes());
+		  
+    	
+    	byte[] nodeExpandInfoByte = redisService.get(("NodeExpand_"+modelId).getBytes());
     	if (nodeExpandInfoByte==null) {
     		ActNodePropertiesExpandExample example = new ActNodePropertiesExpandExample();//actNodePropertiesExpandMapper
         	example.or().andActModelIdEqualTo(modelId);
@@ -1782,10 +1774,10 @@ public class SysformconfigService implements   ISysformconfigService {
     			map.put(actNodePropertiesExpand.getActNodeName(), actNodePropertiesExpand);
     		}
         	if (map.size()>0) {
-    	    	jedis.set(("NodeExpand_"+modelId).getBytes(), SerializeUtil.serialize(map));
-    	    	nodeExpandInfoByte = jedis.get(("NodeExpand_"+modelId).getBytes());
+    	    	redisService.set(("NodeExpand_"+modelId).getBytes(), SerializeUtil.serialize(map));
+    	    	nodeExpandInfoByte = redisService.get(("NodeExpand_"+modelId).getBytes());
         	}else {
-        		jedis.del(("NodeExpand_"+modelId).getBytes());
+        		redisService.del(("NodeExpand_"+modelId).getBytes());
     		}
 		}
     	return (Map) SerializeUtil.unserialize(nodeExpandInfoByte);
@@ -1796,12 +1788,12 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setHtmlPicByMBId(String task,String htmlPic) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	if (htmlPic.length()>0) {
-	    	jedis.set(("HtmlPic_"+task).getBytes(), SerializeUtil.serialize(htmlPic));
+	    	redisService.set(("HtmlPic_"+task).getBytes(), SerializeUtil.serialize(htmlPic));
     	}else {
-    		jedis.del(("HtmlPic_"+task).getBytes());
+    		redisService.del(("HtmlPic_"+task).getBytes());
 		}
 	}
 	/**
@@ -1809,9 +1801,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String getHtmlPicByMBId(String task) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] userInfoByte = jedis.get(("HtmlPic_"+task).getBytes());
+		  
+    	
+    	byte[] userInfoByte = redisService.get(("HtmlPic_"+task).getBytes());
     	if (userInfoByte!=null) {
     		String userInfo = (String) SerializeUtil.unserialize(userInfoByte);
     		return userInfo;
@@ -1820,7 +1812,7 @@ public class SysformconfigService implements   ISysformconfigService {
     		example.or().andMarkEqualTo(task);
     		if (actShowHisMapper.selectByExample(example).size()>0) {
     			ActShowHis showHis = actShowHisMapper.selectByExample(example).get(0);
-    			jedis.set(("HtmlPic_"+task).getBytes(), SerializeUtil.serialize(showHis.getImg()));
+    			redisService.set(("HtmlPic_"+task).getBytes(), SerializeUtil.serialize(showHis.getImg()));
     			return showHis.getImg();
     		} else {
     			return null;
@@ -1833,16 +1825,16 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setFormbuttons(String formId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	SysFormButtonExample example = new SysFormButtonExample();
 		example.or().andFormButtonFormDefIdEqualTo(new BigDecimal(formId));
 		example.setOrderByClause("FORM_BUTTON_SORT");
 		List<SysFormButton> formButtons = sysFormButtonMapper.selectByExample(example);
 		if (formButtons.size()>0) {
-	    	jedis.set(("formButton_"+formId).getBytes(), SerializeUtil.serializeList(formButtons));
+	    	redisService.set(("formButton_"+formId).getBytes(), SerializeUtil.serializeList(formButtons));
 		}else {
-			jedis.del(("formButton_"+formId).getBytes());
+			redisService.del(("formButton_"+formId).getBytes());
 			logger.info("找不到表单ID为"+formId+"的按钮配置信息");
 		}
 	}
@@ -1869,9 +1861,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setTextboxs(List<SysFormTextbox> textboxs) throws Exception {
 		for (int i = 0; i < textboxs.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("textboxInfo_"+textboxs.get(i).getTextboxFormColumnId()).getBytes(), SerializeUtil.serialize(textboxs.get(i)));
+			  
+	    	
+	    	redisService.set(("textboxInfo_"+textboxs.get(i).getTextboxFormColumnId()).getBytes(), SerializeUtil.serialize(textboxs.get(i)));
 		}
 	}
 	
@@ -1900,12 +1892,12 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormTextboxExample example = new SysFormTextboxExample();
 		example.or().andTextboxFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormTextbox> textboxs = sysFormTextboxMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (textboxs.size()>0) {
-			jedis.set(("textboxInfo"+columnId).getBytes(), SerializeUtil.serialize(textboxs.get(0)));
+			redisService.set(("textboxInfo"+columnId).getBytes(), SerializeUtil.serialize(textboxs.get(0)));
 		}else {
-			jedis.del(("textboxInfo"+columnId).getBytes());
+			redisService.del(("textboxInfo"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的文本控件信息");
 		}
 	}
@@ -1916,9 +1908,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setComboboxs(List<SysFormCombobox> comboboxs) throws Exception {
 		for (int i = 0; i < comboboxs.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("comboboxInfo"+comboboxs.get(i).getComboboxFormColumnId()).getBytes(), SerializeUtil.serialize(comboboxs.get(i)));
+			  
+	    	
+	    	redisService.set(("comboboxInfo"+comboboxs.get(i).getComboboxFormColumnId()).getBytes(), SerializeUtil.serialize(comboboxs.get(i)));
 		}
 	}
 	
@@ -1927,9 +1919,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormCombobox getCombobox(String columnId) {
-		JedisFactory factory = new  JedisFactory(new JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-		byte[] comboboxInfoByte = jedis.get(("comboboxInfo"+columnId).getBytes());
+		  
+    	 
+		byte[] comboboxInfoByte = redisService.get(("comboboxInfo"+columnId).getBytes());
     	if (comboboxInfoByte!=null) {
     		SysFormCombobox comboboxs = (SysFormCombobox) SerializeUtil.unserialize(comboboxInfoByte);
     		return comboboxs;
@@ -1938,7 +1930,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andComboboxFormColumnIdEqualTo(new BigDecimal(columnId));
 			List<SysFormCombobox> comboboxs = sysFormComboboxMapper.selectByExample(example);
 			if (comboboxs.size()>0) {
-				jedis.set(("comboboxInfo"+columnId).getBytes(), SerializeUtil.serialize(comboboxs.get(0)));
+				redisService.set(("comboboxInfo"+columnId).getBytes(), SerializeUtil.serialize(comboboxs.get(0)));
 				return comboboxs.get(0);
 			}else {
 				logger.info("找不到字段ID为"+columnId+"的文本控件信息");
@@ -1955,12 +1947,12 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormComboboxExample example = new SysFormComboboxExample();
 		example.or().andComboboxFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormCombobox> comboboxs = sysFormComboboxMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory(new JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (comboboxs.size()>0) {
-			jedis.set(("comboboxInfo"+columnId).getBytes(), SerializeUtil.serialize(comboboxs.get(0)));
+			redisService.set(("comboboxInfo"+columnId).getBytes(), SerializeUtil.serialize(comboboxs.get(0)));
 		}else {
-			jedis.del(("comboboxInfo"+columnId).getBytes());
+			redisService.del(("comboboxInfo"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的下拉控件信息");
 		}
 	}
@@ -1971,9 +1963,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setRadiobuttonlists(List<SysFormRadiobuttonlist> radiobuttonlists) throws Exception {
 		for (int i = 0; i < radiobuttonlists.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("radiobuttonlistInfo_"+radiobuttonlists.get(i).getRadiolistFormColumnId()).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(i)));
+			  
+	    	
+	    	redisService.set(("radiobuttonlistInfo_"+radiobuttonlists.get(i).getRadiolistFormColumnId()).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(i)));
 		}
 	}
 	
@@ -1982,9 +1974,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormRadiobuttonlist getRadiobuttonlist(String columnId) {
-//		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-//    	Jedis jedis = factory.getJedis(); 
-//    	byte[] radiobuttonlistInfoByte = jedis.get(("radiobuttonlistInfo_"+columnId).getBytes());
+//		  
+//    	 
+//    	byte[] radiobuttonlistInfoByte = redisService.get(("radiobuttonlistInfo_"+columnId).getBytes());
 //    	if (radiobuttonlistInfoByte!=null) {
 //    		SysFormRadiobuttonlist radiobuttonlistInfo =(SysFormRadiobuttonlist) SerializeUtil.unserialize(radiobuttonlistInfoByte);
 //    		return radiobuttonlistInfo;
@@ -1993,7 +1985,7 @@ public class SysformconfigService implements   ISysformconfigService {
 //			example.or().andRadiolistFormColumnIdEqualTo(new BigDecimal(columnId));
 //			List<SysFormRadiobuttonlist> radiobuttonlists = sysFormRadiobuttonlistMapper.selectByExample(example);
 //			if (radiobuttonlists.size()>0) {
-//				jedis.set(("radiobuttonlistInfo_"+columnId).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(0)));
+//				redisService.set(("radiobuttonlistInfo_"+columnId).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(0)));
 //				return radiobuttonlists.get(0);
 //			}else {
 //				logger.info("找不到字段ID为"+columnId+"的文本控件信息");
@@ -2019,13 +2011,13 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormRadiobuttonlistExample example = new SysFormRadiobuttonlistExample();
 		example.or().andRadiolistFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormRadiobuttonlist> radiobuttonlists = sysFormRadiobuttonlistMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (radiobuttonlists.size()>0) {
-			jedis.set(("radiobuttonlistInfo_"+columnId).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(0)));
+			redisService.set(("radiobuttonlistInfo_"+columnId).getBytes(), SerializeUtil.serialize(radiobuttonlists.get(0)));
 			//radiobuttonlistMap.put(columnId,radiobuttonlists.get(0));
 		}else {
-			jedis.del(("radiobuttonlistInfo_"+columnId).getBytes());
+			redisService.del(("radiobuttonlistInfo_"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的单选多选组控件信息");
 		}
 	}
@@ -2036,9 +2028,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setDatepickers(List<SysFormDatepicker> datepickers) throws Exception {
 		for (int i = 0; i < datepickers.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("datepickerInfo_"+datepickers.get(i).getDatepickerFormColumnId()).getBytes(), SerializeUtil.serialize(datepickers.get(i)));
+			  
+	    	
+	    	redisService.set(("datepickerInfo_"+datepickers.get(i).getDatepickerFormColumnId()).getBytes(), SerializeUtil.serialize(datepickers.get(i)));
 		}
 	}
 	
@@ -2047,9 +2039,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysFormDatepicker getDatepicker(String columnId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] datepickerInfoByte = jedis.get(("datepickerInfo_"+columnId).getBytes());
+		  
+    	 
+    	byte[] datepickerInfoByte = redisService.get(("datepickerInfo_"+columnId).getBytes());
     	if (datepickerInfoByte!=null) {
     		SysFormDatepicker datepickerInfo =(SysFormDatepicker) SerializeUtil.unserialize(datepickerInfoByte);
     		return datepickerInfo;
@@ -2058,7 +2050,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andDatepickerFormColumnIdEqualTo(new BigDecimal(columnId));
 			List<SysFormDatepicker> datepickers = sysFormDatepickerMapper.selectByExample(example);
 			if (datepickers.size()>0) {
-				jedis.set(("datepickerInfo_"+columnId).getBytes(), SerializeUtil.serialize(datepickers.get(0)));
+				redisService.set(("datepickerInfo_"+columnId).getBytes(), SerializeUtil.serialize(datepickers.get(0)));
 				return datepickers.get(0);
 			}else {
 				logger.info("找不到字段ID为"+columnId+"的文本控件信息");
@@ -2075,13 +2067,13 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormDatepickerExample example = new SysFormDatepickerExample();
 		example.or().andDatepickerFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormDatepicker> datepickers = sysFormDatepickerMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (datepickers.size()>0) {
-			jedis.set(("datepickerInfo_"+columnId).getBytes(), SerializeUtil.serialize(datepickers.get(0)));
+			redisService.set(("datepickerInfo_"+columnId).getBytes(), SerializeUtil.serialize(datepickers.get(0)));
 			//datepickerMap.put(columnId,datepickers.get(0));
 		}else {
-			jedis.del(("datepickerInfo_"+columnId).getBytes());
+			redisService.del(("datepickerInfo_"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的日期控件信息");
 		}
 	}
@@ -2092,9 +2084,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setLookups(List<SysFormLookup> lookups) throws Exception {
 		for (int i = 0; i < lookups.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("lookupInfo_"+lookups.get(i).getLookupFormColumnId()).getBytes(), SerializeUtil.serialize(lookups.get(i)));
+			  
+	    	
+	    	redisService.set(("lookupInfo_"+lookups.get(i).getLookupFormColumnId()).getBytes(), SerializeUtil.serialize(lookups.get(i)));
 		}
 	}
 	
@@ -2123,13 +2115,13 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormLookupExample example = new SysFormLookupExample();
 		example.or().andLookupFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormLookup> lookups = sysFormLookupMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (lookups.size()>0) {
-			jedis.set(("lookupInfo_"+columnId).getBytes(), SerializeUtil.serialize(lookups.get(0)));
+			redisService.set(("lookupInfo_"+columnId).getBytes(), SerializeUtil.serialize(lookups.get(0)));
 			//lookupMap.put(columnId,lookups.get(0));
 		}else {
-			jedis.del(("lookupInfo_"+columnId).getBytes());
+			redisService.del(("lookupInfo_"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的下拉弹出控件信息");
 		}
 	}
@@ -2140,9 +2132,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setRichtexts(List<SysFormRichtext> richtexts) throws Exception {
 		for (int i = 0; i < richtexts.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("richtextInfo_"+richtexts.get(i).getRichtextFormColumnId()).getBytes(), SerializeUtil.serialize(richtexts.get(i)));
+			  
+	    	
+	    	redisService.set(("richtextInfo_"+richtexts.get(i).getRichtextFormColumnId()).getBytes(), SerializeUtil.serialize(richtexts.get(i)));
 		}
 	}
 	
@@ -2171,13 +2163,13 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormRichtextExample example = new SysFormRichtextExample();
 		example.or().andRichtextFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormRichtext> richtexts = sysFormRichtextMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (richtexts.size()>0) {
-			jedis.set(("richtextInfo_"+columnId).getBytes(), SerializeUtil.serialize(richtexts.get(0)));
+			redisService.set(("richtextInfo_"+columnId).getBytes(), SerializeUtil.serialize(richtexts.get(0)));
 			//richtextMap.put(columnId,richtexts.get(0));
 		}else {
-			jedis.del(("richtextInfo_"+columnId).getBytes());
+			redisService.del(("richtextInfo_"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的富文本控件信息");
 		}
 	}
@@ -2188,9 +2180,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setFileuploads(List<SysFormFileupload> fileuploads) throws Exception {
 		for (int i = 0; i < fileuploads.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("fileuploadInfo_"+fileuploads.get(i).getFileuploadFormColumnId()).getBytes(), SerializeUtil.serialize(fileuploads.get(i)));
+			  
+	    	
+	    	redisService.set(("fileuploadInfo_"+fileuploads.get(i).getFileuploadFormColumnId()).getBytes(), SerializeUtil.serialize(fileuploads.get(i)));
 		}
 	}
 	
@@ -2219,12 +2211,12 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormFileuploadExample example = new SysFormFileuploadExample();
 		example.or().andFileuploadFormColumnIdEqualTo(new BigDecimal(columnId));
 		List<SysFormFileupload> fileuploads = sysFormFileuploadMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (fileuploads.size()>0) {
-			jedis.set(("fileuploadInfo_"+columnId).getBytes(), SerializeUtil.serialize(fileuploads.get(0)));
+			redisService.set(("fileuploadInfo_"+columnId).getBytes(), SerializeUtil.serialize(fileuploads.get(0)));
 		}else {
-			jedis.del(("fileuploadInfo_"+columnId).getBytes());
+			redisService.del(("fileuploadInfo_"+columnId).getBytes());
 			logger.info("找不到字段ID为"+columnId+"的附件上传控件信息");
 		}
 	}
@@ -2240,18 +2232,18 @@ public class SysformconfigService implements   ISysformconfigService {
 			throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < buttonSaves.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonSaveInfo_"+buttonSaves.get(i).getButtonSaveButtonId()).getBytes(), SerializeUtil.serialize(buttonSaves.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonSaveInfo_"+buttonSaves.get(i).getButtonSaveButtonId()).getBytes(), SerializeUtil.serialize(buttonSaves.get(i)));
 		}
 	}
 
 	@Override
 	public SysFormButtonSave getButtonSave(String buttonId) {
 		// TODO Auto-generated method stub
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonSaveInfoByte = jedis.get(("buttonSaveInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonSaveInfoByte = redisService.get(("buttonSaveInfo_"+buttonId).getBytes());
     	if (buttonSaveInfoByte!=null) {
     		SysFormButtonSave buttonSaveInfo =(SysFormButtonSave) SerializeUtil.unserialize(buttonSaveInfoByte);
     		return buttonSaveInfo;
@@ -2260,7 +2252,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andButtonSaveButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonSave> buttonSaves = sysFormButtonSaveMapper.selectByExample(example);
 			if (buttonSaves.size()>0) {
-				jedis.set(("buttonSaveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonSaves.get(0)));
+				redisService.set(("buttonSaveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonSaves.get(0)));
 				return buttonSaves.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的保存按钮信息");
@@ -2274,15 +2266,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonSave(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonSaveExample example = new SysFormButtonSaveExample();
 		example.or().andButtonSaveButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonSave> buttonSaves = sysFormButtonSaveMapper.selectByExample(example);
 		if (buttonSaves.size()>0) {
-			jedis.set(("buttonSaveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonSaves.get(0)));
+			redisService.set(("buttonSaveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonSaves.get(0)));
 		}else {
-			jedis.del(("buttonSaveInfo_"+buttonId).getBytes());
+			redisService.del(("buttonSaveInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的保存按钮信息");
 		}
 	}
@@ -2291,17 +2283,17 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setButtonAdds(List<SysFormButtonAdd> buttonAdds)
 			throws Exception {
 		for (int i = 0; i < buttonAdds.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonAddInfo_"+buttonAdds.get(i).getButtonAddButtonId()).getBytes(), SerializeUtil.serialize(buttonAdds.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonAddInfo_"+buttonAdds.get(i).getButtonAddButtonId()).getBytes(), SerializeUtil.serialize(buttonAdds.get(i)));
 		}
 	}
 
 	@Override
 	public SysFormButtonAdd getButtonAdd(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonAddInfoByte = jedis.get(("buttonAddInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonAddInfoByte = redisService.get(("buttonAddInfo_"+buttonId).getBytes());
     	if (buttonAddInfoByte!=null) {
     		SysFormButtonAdd buttonAddInfo =(SysFormButtonAdd) SerializeUtil.unserialize(buttonAddInfoByte);
     		return buttonAddInfo;
@@ -2310,7 +2302,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andButtonAddButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonAdd> buttonAdds = sysFormButtonAddMapper.selectByExample(example);
 			if (buttonAdds.size()>0) {
-				jedis.set(("buttonAddInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonAdds.get(0)));
+				redisService.set(("buttonAddInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonAdds.get(0)));
 				return buttonAdds.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的新增按钮信息");
@@ -2324,15 +2316,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonAdd(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonAddExample example = new SysFormButtonAddExample();
 		example.or().andButtonAddButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonAdd> buttonAdds = sysFormButtonAddMapper.selectByExample(example);
 		if (buttonAdds.size()>0) {
-			jedis.set(("buttonAddInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonAdds.get(0)));
+			redisService.set(("buttonAddInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonAdds.get(0)));
 		}else {
-			jedis.del(("buttonAddInfo_"+buttonId).getBytes());
+			redisService.del(("buttonAddInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的新增按钮信息");
 		}
 	}
@@ -2342,18 +2334,18 @@ public class SysformconfigService implements   ISysformconfigService {
 			throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < buttonRemoves.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonRemoveInfo_"+buttonRemoves.get(i).getButtonRemoveButtonId()).getBytes(), SerializeUtil.serialize(buttonRemoves.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonRemoveInfo_"+buttonRemoves.get(i).getButtonRemoveButtonId()).getBytes(), SerializeUtil.serialize(buttonRemoves.get(i)));
 		}
 		
 	}
 
 	@Override
 	public SysFormButtonRemove getButtonRemove(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonRemoveInfoByte = jedis.get(("buttonRemoveInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonRemoveInfoByte = redisService.get(("buttonRemoveInfo_"+buttonId).getBytes());
     	if (buttonRemoveInfoByte!=null) {
     		SysFormButtonRemove buttonRemoveInfo =(SysFormButtonRemove) SerializeUtil.unserialize(buttonRemoveInfoByte);
     		return buttonRemoveInfo;
@@ -2362,7 +2354,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andButtonRemoveButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonRemove> buttonRemoves = sysFormButtonRemoveMapper.selectByExample(example);
 			if (buttonRemoves.size()>0) {
-				jedis.set(("buttonRemoveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonRemoves.get(0)));
+				redisService.set(("buttonRemoveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonRemoves.get(0)));
 				return buttonRemoves.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的新增按钮信息");
@@ -2376,15 +2368,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonRemove(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonRemoveExample example = new SysFormButtonRemoveExample();
 		example.or().andButtonRemoveButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonRemove> buttonRemoves = sysFormButtonRemoveMapper.selectByExample(example);
 		if (buttonRemoves.size()>0) {
-			jedis.set(("buttonRemoveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonRemoves.get(0)));
+			redisService.set(("buttonRemoveInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonRemoves.get(0)));
 		}else {
-			jedis.del(("buttonRemoveInfo_"+buttonId).getBytes());
+			redisService.del(("buttonRemoveInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的新增按钮信息");
 		}
 	}
@@ -2394,17 +2386,17 @@ public class SysformconfigService implements   ISysformconfigService {
 			throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < buttonImports.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonImportInfo_"+buttonImports.get(i).getFormButtonId()).getBytes(), SerializeUtil.serialize(buttonImports.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonImportInfo_"+buttonImports.get(i).getFormButtonId()).getBytes(), SerializeUtil.serialize(buttonImports.get(i)));
 		}
 	}
 
 	@Override
 	public SysFormButtonImport getButtonImport(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonImportInfoByte = jedis.get(("buttonImportInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonImportInfoByte = redisService.get(("buttonImportInfo_"+buttonId).getBytes());
     	if (buttonImportInfoByte!=null) {
     		SysFormButtonImport buttonImportInfo =(SysFormButtonImport) SerializeUtil.unserialize(buttonImportInfoByte);
     		return buttonImportInfo;
@@ -2413,7 +2405,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andFormButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonImport> buttonImports = sysFormButtonImportMapper.selectByExample(example);
 			if (buttonImports.size()>0) {
-				jedis.set(("buttonImportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonImports.get(0)));
+				redisService.set(("buttonImportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonImports.get(0)));
 				return buttonImports.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的导入按钮信息");
@@ -2424,9 +2416,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public SysFormButtonExport getButtonExport(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonExportInfoByte = jedis.get(("buttonExportInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonExportInfoByte = redisService.get(("buttonExportInfo_"+buttonId).getBytes());
     	if (buttonExportInfoByte!=null) {
     		SysFormButtonExport buttonExportInfo =(SysFormButtonExport) SerializeUtil.unserialize(buttonExportInfoByte);
     		return buttonExportInfo;
@@ -2435,7 +2427,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andFormButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonExport> buttonExports = sysFormButtonExportMapper.selectByExample(example);
 			if (buttonExports.size()>0) {
-				jedis.set(("buttonExportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonExports.get(0)));
+				redisService.set(("buttonExportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonExports.get(0)));
 				return buttonExports.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的导出按钮信息");
@@ -2449,15 +2441,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonImport(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonImportExample example = new SysFormButtonImportExample();
 		example.or().andFormButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonImport> buttonImports = sysFormButtonImportMapper.selectByExample(example);
 		if (buttonImports.size()>0) {
-			jedis.set(("buttonImportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonImports.get(0)));
+			redisService.set(("buttonImportInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonImports.get(0)));
 		}else {
-			jedis.del(("buttonImportInfo_"+buttonId).getBytes());
+			redisService.del(("buttonImportInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的导入按钮信息");
 		}
 	}
@@ -2467,17 +2459,17 @@ public class SysformconfigService implements   ISysformconfigService {
 			List<SysFormButtonCalculate> buttonCalculates) throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < buttonCalculates.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonCalculateInfo_"+buttonCalculates.get(i).getCalculateButtonId()).getBytes(), SerializeUtil.serialize(buttonCalculates.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonCalculateInfo_"+buttonCalculates.get(i).getCalculateButtonId()).getBytes(), SerializeUtil.serialize(buttonCalculates.get(i)));
 		}
 	}
 
 	@Override
 	public SysFormButtonCalculate getButtonCalculate(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonCalculateInfoByte = jedis.get(("buttonCalculateInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonCalculateInfoByte = redisService.get(("buttonCalculateInfo_"+buttonId).getBytes());
     	if (buttonCalculateInfoByte!=null) {
     		SysFormButtonCalculate buttonCalculateInfo =(SysFormButtonCalculate) SerializeUtil.unserialize(buttonCalculateInfoByte);
     		return buttonCalculateInfo;
@@ -2486,7 +2478,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andCalculateButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonCalculate> buttonCalculates = sysFormButtonCalculateMapper.selectByExample(example);
 			if (buttonCalculates.size()>0) {
-				jedis.set(("buttonCalculateInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonCalculates.get(0)));
+				redisService.set(("buttonCalculateInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonCalculates.get(0)));
 				return buttonCalculates.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的计算按钮信息");
@@ -2513,15 +2505,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonCalculate(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonCalculateExample example = new SysFormButtonCalculateExample();
 		example.or().andCalculateButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonCalculate> buttonCalculates = sysFormButtonCalculateMapper.selectByExample(example);
 		if (buttonCalculates.size()>0) {
-			jedis.set(("buttonCalculateInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonCalculates.get(0)));
+			redisService.set(("buttonCalculateInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonCalculates.get(0)));
 		}else {
-			jedis.del(("buttonCalculateInfo_"+buttonId).getBytes());
+			redisService.del(("buttonCalculateInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的计算按钮信息");
 		}
 	}
@@ -2531,17 +2523,17 @@ public class SysformconfigService implements   ISysformconfigService {
 			List<SysFormButtonIntroduce> buttonIntroduces) throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < buttonIntroduces.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonIntroduceInfo_"+buttonIntroduces.get(i).getIntroduceButtonId()).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonIntroduceInfo_"+buttonIntroduces.get(i).getIntroduceButtonId()).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(i)));
 		}
 	}
 
 	@Override
 	public SysFormButtonIntroduce getButtonIntroduce(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonIntroduceInfoByte = jedis.get(("buttonIntroduceInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonIntroduceInfoByte = redisService.get(("buttonIntroduceInfo_"+buttonId).getBytes());
     	if (buttonIntroduceInfoByte!=null) {
     		SysFormButtonIntroduce buttonIntroduceInfo =(SysFormButtonIntroduce) SerializeUtil.unserialize(buttonIntroduceInfoByte);
     		return buttonIntroduceInfo;
@@ -2550,7 +2542,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andIntroduceButtonIdEqualTo(new BigDecimal(buttonId));
 			List<SysFormButtonIntroduce> buttonIntroduces = sysFormButtonIntroduceMapper.selectByExample(example);
 			if (buttonIntroduces.size()>0) {
-				jedis.set(("buttonIntroduceInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(0)));
+				redisService.set(("buttonIntroduceInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(0)));
 				return buttonIntroduces.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的导入按钮信息");
@@ -2564,15 +2556,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setButtonIntroduce(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormButtonIntroduceExample example = new SysFormButtonIntroduceExample();
 		example.or().andIntroduceButtonIdEqualTo(new BigDecimal(buttonId));
 		List<SysFormButtonIntroduce> buttonIntroduces = sysFormButtonIntroduceMapper.selectByExample(example);
 		if (buttonIntroduces.size()>0) {
-			jedis.set(("buttonIntroduceInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(0)));
+			redisService.set(("buttonIntroduceInfo_"+buttonId).getBytes(), SerializeUtil.serialize(buttonIntroduces.get(0)));
 		}else {
-			jedis.del(("buttonIntroduceInfo_"+buttonId).getBytes());
+			redisService.del(("buttonIntroduceInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的导入按钮信息");
 		}
 	}
@@ -2581,17 +2573,17 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setSysExecSqls(List<SysExecSql> sysExecSqls) throws Exception {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < sysExecSqls.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("buttonSysExecSqlInfo_"+sysExecSqls.get(i).getExecSqlRelaid()).getBytes(), SerializeUtil.serialize(sysExecSqls.get(i)));
+			  
+	    	
+	    	redisService.set(("buttonSysExecSqlInfo_"+sysExecSqls.get(i).getExecSqlRelaid()).getBytes(), SerializeUtil.serialize(sysExecSqls.get(i)));
 		}
 	}
 
 	@Override
 	public SysExecSql getSysExecSql(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] buttonSysExecSqlInfoByte = jedis.get(("buttonSysExecSqlInfo_"+buttonId).getBytes());
+		  
+    	 
+    	byte[] buttonSysExecSqlInfoByte = redisService.get(("buttonSysExecSqlInfo_"+buttonId).getBytes());
     	if (buttonSysExecSqlInfoByte!=null) {
     		SysExecSql buttonSysExecSqlInfo =(SysExecSql) SerializeUtil.unserialize(buttonSysExecSqlInfoByte);
     		return buttonSysExecSqlInfo;
@@ -2600,7 +2592,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andExecSqlRelaidEqualTo(Long.parseLong(buttonId)).andExecSqlTypeEqualTo("buttonExecSQL");
 			List<SysExecSql> sysExecSqls = sysExecSqlMapper.selectByExample(example);
 			if (sysExecSqls.size()>0) {
-				jedis.set(("buttonSysExecSqlInfo_"+buttonId).getBytes(), SerializeUtil.serialize(sysExecSqls.get(0)));
+				redisService.set(("buttonSysExecSqlInfo_"+buttonId).getBytes(), SerializeUtil.serialize(sysExecSqls.get(0)));
 				return sysExecSqls.get(0);
 			}else {
 				logger.info("找不到按钮ID为"+buttonId+"的调用SQL按钮信息");
@@ -2614,15 +2606,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setSysExecSql(String buttonId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysExecSqlExample example = new SysExecSqlExample();
 		example.or().andExecSqlRelaidEqualTo(Long.parseLong(buttonId)).andExecSqlTypeEqualTo("buttonExecSQL");
 		List<SysExecSql> sysExecSqls = sysExecSqlMapper.selectByExample(example);
 		if (sysExecSqls.size()>0) {
-			jedis.set(("buttonSysExecSqlInfo_"+buttonId).getBytes(), SerializeUtil.serialize(sysExecSqls.get(0)));
+			redisService.set(("buttonSysExecSqlInfo_"+buttonId).getBytes(), SerializeUtil.serialize(sysExecSqls.get(0)));
 		}else {
-			jedis.del(("buttonSysExecSqlInfo_"+buttonId).getBytes());
+			redisService.del(("buttonSysExecSqlInfo_"+buttonId).getBytes());
 			logger.info("找不到按钮ID为"+buttonId+"的调用SQL按钮信息");
 		}
 	}
@@ -2630,9 +2622,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<SysFormWhere> getFormWheres(BigDecimal formId, String otherType){
-//		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-//    	Jedis jedis = factory.getJedis();
-//    	byte[] sysFormWhereByte = jedis.get(("formWhere_"+formId).getBytes());
+//		  
+//    	
+//    	byte[] sysFormWhereByte = redisService.get(("formWhere_"+formId).getBytes());
 //		if(sysFormWhereByte==null){
 //			SysFormWhereExample example = new SysFormWhereExample();
 //			SysFormWhereExample.Criteria criteria = example.createCriteria();
@@ -2640,7 +2632,7 @@ public class SysformconfigService implements   ISysformconfigService {
 //			example.setOrderByClause("FORM_WHERE_SORT");
 //			List<SysFormWhere> objs = sysFormWhereMapper.selectByExample(example);
 //			if (objs.size()>0) {
-//		    	jedis.set(("formWhere_"+formId).getBytes(), SerializeUtil.serializeList(objs));
+//		    	redisService.set(("formWhere_"+formId).getBytes(), SerializeUtil.serializeList(objs));
 //		    	return objs;
 //			}else {
 //				return null;
@@ -2663,17 +2655,17 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public void setFormWheres(String formId){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		SysFormWhereExample example = new SysFormWhereExample();
 		SysFormWhereExample.Criteria criteria = example.createCriteria();
 		criteria.andFormWhereFormDefIdEqualTo(new BigDecimal(formId));
 		example.setOrderByClause("FORM_WHERE_SORT");
 		List<SysFormWhere> objs = sysFormWhereMapper.selectByExample(example);
 		if (objs.size()>0) {
-	    	jedis.set(("formWhere_"+formId).getBytes(), SerializeUtil.serializeList(objs));
+	    	redisService.set(("formWhere_"+formId).getBytes(), SerializeUtil.serializeList(objs));
 		}else {
-			jedis.del(("formWhere_"+formId).getBytes());
+			redisService.del(("formWhere_"+formId).getBytes());
 		}
 	}
 	
@@ -2682,9 +2674,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public SysGridFilter getFormFilter(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] sysGridFilterInfoByte = jedis.get(("sysGridFilterInfo_"+formId).getBytes());
+		  
+    	 
+    	byte[] sysGridFilterInfoByte = redisService.get(("sysGridFilterInfo_"+formId).getBytes());
     	if (sysGridFilterInfoByte!=null) {
     		SysGridFilter sysGridFilterInfo =(SysGridFilter) SerializeUtil.unserialize(sysGridFilterInfoByte);
     		return sysGridFilterInfo;
@@ -2694,7 +2686,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			criteria.andGridFilterFormDefIdEqualTo(new BigDecimal(formId));
 			List<SysGridFilter> list = sysGridFilterMapper.selectByExample(example);
 			if (list.size()>0) {
-				jedis.set(("sysGridFilterInfo_"+formId).getBytes(), SerializeUtil.serialize(list.get(0)));
+				redisService.set(("sysGridFilterInfo_"+formId).getBytes(), SerializeUtil.serialize(list.get(0)));
 				return list.get(0);
 			}else {
 				logger.info("找不到表单ID为"+formId+"的查询配置信息");
@@ -2708,16 +2700,16 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public void setFormFilter(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysGridFilterExample example = new SysGridFilterExample();
 		SysGridFilterExample.Criteria criteria =  example.createCriteria();
 		criteria.andGridFilterFormDefIdEqualTo(new BigDecimal(formId));
 		List<SysGridFilter> list = sysGridFilterMapper.selectByExample(example);
 		if (list.size()>0) {
-			jedis.set(("sysGridFilterInfo_"+formId).getBytes(), SerializeUtil.serialize(list.get(0)));
+			redisService.set(("sysGridFilterInfo_"+formId).getBytes(), SerializeUtil.serialize(list.get(0)));
 		}else {
-			jedis.del(("sysGridFilterInfo_"+formId).getBytes());
+			redisService.del(("sysGridFilterInfo_"+formId).getBytes());
 			logger.info("找不到表单ID为"+formId+"的查询配置信息");
 		}
 	}
@@ -2728,33 +2720,33 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setGridFilters(List<SysGridFilter> filters) throws Exception {
 		for (int i = 0; i < filters.size(); i++) {
-			JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-	    	Jedis jedis = factory.getJedis();
-	    	jedis.set(("sysGridFilterInfo_"+filters.get(i).getGridFilterFormDefId()).getBytes(), SerializeUtil.serialize(filters.get(i)));
+			  
+	    	
+	    	redisService.set(("sysGridFilterInfo_"+filters.get(i).getGridFilterFormDefId()).getBytes(), SerializeUtil.serialize(filters.get(i)));
 		}
 	}
 	
 	@Override
 	public void setFormFilterColumns(String formId) {
 		List<SysGridFilterColumn> list = IFilterService.queryFilterColumnList(formId);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
 		if(list!=null&&list.size()>0){
-	    	jedis.set(("sysGridFilterColumns_"+formId).getBytes(), SerializeUtil.serializeList(list));
+	    	redisService.set(("sysGridFilterColumns_"+formId).getBytes(), SerializeUtil.serializeList(list));
 		}else {
-			jedis.del(("sysGridFilterColumns_"+formId).getBytes());
+			redisService.del(("sysGridFilterColumns_"+formId).getBytes());
 		}
 	}
 
 	@Override
 	public List<SysGridFilterColumn> getFormFilterColumns(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysGridFilterColumnsByte = jedis.get(("sysGridFilterColumns_"+formId).getBytes());
+		  
+    	
+    	byte[] sysGridFilterColumnsByte = redisService.get(("sysGridFilterColumns_"+formId).getBytes());
 		if(sysGridFilterColumnsByte==null){
 			List<SysGridFilterColumn> list = IFilterService.queryFilterColumnList(formId);
 			if (list!=null&&list.size()>0) {
-		    	jedis.set(("sysGridFilterColumns_"+formId).getBytes(), SerializeUtil.serializeList(list));
+		    	redisService.set(("sysGridFilterColumns_"+formId).getBytes(), SerializeUtil.serializeList(list));
 		    	return list;
 			} else {
 				return null;
@@ -2773,14 +2765,14 @@ public class SysformconfigService implements   ISysformconfigService {
 
 	@Override
 	public SysFileuploadConfig getFileuploadConfigById(String fileuploadConfig) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] sysFileuploadConfigByte = jedis.get(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes());
+		  
+    	
+    	byte[] sysFileuploadConfigByte = redisService.get(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes());
 		if(sysFileuploadConfigByte==null){
 			if(fileuploadConfig!=null&&!fileuploadConfig.equals("")){
 				SysFileuploadConfig config = fileuploadConfigMapper.selectByPrimaryKey(new BigDecimal(fileuploadConfig));
 				if (config!=null) {
-			    	jedis.set(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes(), SerializeUtil.serialize(config));
+			    	redisService.set(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes(), SerializeUtil.serialize(config));
 			    	return config;
 				} else {
 					return null;
@@ -2803,12 +2795,12 @@ public class SysformconfigService implements   ISysformconfigService {
 			String fileuploadConfig = form.getFileuploadConfig();
 			if (fileuploadConfig!=null) {
 				SysFileuploadConfig config = fileuploadConfigMapper.selectByPrimaryKey(new BigDecimal(fileuploadConfig));
-				JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-		    	Jedis jedis = factory.getJedis();
+				  
+		    	
 				if(config!=null){
-			    	jedis.set(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes(), SerializeUtil.serialize(config));
+			    	redisService.set(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes(), SerializeUtil.serialize(config));
 				}else {
-					jedis.del(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes());
+					redisService.del(("sysFileuploadConfigBy_"+fileuploadConfig).getBytes());
 				}
 			}
 			
@@ -2834,9 +2826,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String setColumnSqlDict(String realFieldColumn,String sql){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	String columnSqlDictDatas = jedis.get("columnSqlDictDatas"+realFieldColumn);
+		  
+    	 
+    	String columnSqlDictDatas = redisService.get("columnSqlDictDatas"+realFieldColumn);
     	if (columnSqlDictDatas!=null) {
     		return columnSqlDictDatas;
 		}else {
@@ -2857,7 +2849,7 @@ public class SysformconfigService implements   ISysformconfigService {
 				String str = sb.toString();
 				String str1 = str.substring(0, str.length()-1);
 				str1+="]";
-				jedis.set("columnSqlDictDatas"+realFieldColumn,str1);
+				redisService.set("columnSqlDictDatas"+realFieldColumn,str1);
 				return str1;
 			}else {
 				return null;
@@ -2870,9 +2862,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	 */
 	@Override
 	public String getColumnSqlDict(String dataField){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	String columnSqlDictDatas = jedis.get("columnSqlDictDatas"+dataField);
+		  
+    	 
+    	String columnSqlDictDatas = redisService.get("columnSqlDictDatas"+dataField);
     	return columnSqlDictDatas;
 	}
 
@@ -2883,9 +2875,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	public void setFormInfo(String formId){
 		SysFormconfigWithBLOBs form = sysFormconfigMapper.selectByPrimaryKey(new BigDecimal(formId));
 		//formInfoMap.put(formId,form);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("formInfo"+formId).getBytes(), SerializeUtil.serialize(form));
+		  
+    	 
+    	redisService.set(("formInfo"+formId).getBytes(), SerializeUtil.serialize(form));
 	}
 
 	/**
@@ -2913,8 +2905,8 @@ public class SysformconfigService implements   ISysformconfigService {
 	}
 	
 	public static void main(String[] args) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
     	Map obj = new HashMap();
 	}
 	
@@ -2951,17 +2943,17 @@ public class SysformconfigService implements   ISysformconfigService {
 
 	@Override
 	public Map getSysParam() {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] EmpInfoByte = jedis.get(("sysSystemParam").getBytes());
+		  
+    	
+    	byte[] EmpInfoByte = redisService.get(("sysSystemParam").getBytes());
     	return (Map) SerializeUtil.unserialize(EmpInfoByte);
 	}
 
 	@Override
 	public SysCardtocardConfig getCardandcardConfigByFormId(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] cardtocardConfigInfoByte = jedis.get(("cardtocardConfig"+formId).getBytes());
+		  
+    	 
+    	byte[] cardtocardConfigInfoByte = redisService.get(("cardtocardConfig"+formId).getBytes());
     	if (cardtocardConfigInfoByte!=null) {
     		SysCardtocardConfig cardtocardConfig =(SysCardtocardConfig) SerializeUtil.unserialize(cardtocardConfigInfoByte);
     		return cardtocardConfig;
@@ -2970,7 +2962,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andFormIdEqualTo(Long.valueOf(formId));
 			List<SysCardtocardConfig> configs = cardtocardConfigMapper.selectByExample(example);
 			if (configs.size()>0) {
-				jedis.set(("cardtocardConfig"+formId).getBytes(), SerializeUtil.serialize(configs.get(0)));
+				redisService.set(("cardtocardConfig"+formId).getBytes(), SerializeUtil.serialize(configs.get(0)));
 				return configs.get(0);
 			}else {
 				logger.info("找不到表单ID为"+formId+"的卡卡配置信息");
@@ -2987,12 +2979,12 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysCardtocardConfigExample example = new SysCardtocardConfigExample();
 		example.or().andFormIdEqualTo(Long.valueOf(formId));
 		List<SysCardtocardConfig> configs = cardtocardConfigMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (configs.size()>0) {
-			jedis.set(("cardtocardConfig"+formId).getBytes(), SerializeUtil.serialize(configs.get(0)));
+			redisService.set(("cardtocardConfig"+formId).getBytes(), SerializeUtil.serialize(configs.get(0)));
 		}else {
-			jedis.del(("cardtocardConfig"+formId).getBytes());
+			redisService.del(("cardtocardConfig"+formId).getBytes());
 			logger.info("找不到字段ID为"+formId+"的下拉弹出控件信息");
 		}
 	}
@@ -3007,7 +2999,7 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysFormFolderTree tree = null;
 		if (sysFormFolderTrees.size()>0) {
 			tree = sysFormFolderTrees.get(0);
-			path = tree.getFolderTreeCode()+"/"+path;
+			path = tree.getFolderTreeCode()+File.separator+path;
 			if (tree.getFolderTreeParentId()!=null) {
 				path = findSysFormFolderTreeById(tree.getFolderTreeParentId().intValue(),path);
 			}else {
@@ -3044,33 +3036,33 @@ public class SysformconfigService implements   ISysformconfigService {
 		example.or().andTaskidEqualTo(taskid);
 		example.setOrderByClause("ORDERBY");
 		List<SysActfreeWay> ways = sysActfreeWayMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		if (ways.size()>0) {
-			jedis.set(("FreeWay_"+taskid).getBytes(), SerializeUtil.serializeList(ways));
+			redisService.set(("FreeWay_"+taskid).getBytes(), SerializeUtil.serializeList(ways));
 			for (int i = 0; i < ways.size(); i++) {
-				jedis.set(("FreeWay_"+taskid+"_order_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i)));
+				redisService.set(("FreeWay_"+taskid+"_order_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i)));
 				if (i<ways.size()-1) {
-					jedis.set(("FreeWay_"+taskid+"_next_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i+1)));
+					redisService.set(("FreeWay_"+taskid+"_next_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i+1)));
 				}
-				jedis.set(("FreeWay_"+taskid+"_now_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i)));
+				redisService.set(("FreeWay_"+taskid+"_now_"+ways.get(i).getOrderby()).getBytes(), SerializeUtil.serialize(ways.get(i)));
 			}
 		}else {
-			jedis.del(("FreeWay_"+taskid).getBytes());
+			redisService.del(("FreeWay_"+taskid).getBytes());
 		}
 	}
 	
 	@Override
 	public SysActfreeWay getNextFreeWayByTOId(String taskid,String orderBy){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeWaysInfoByte = jedis.get(("FreeWay_"+taskid+"_next_"+orderBy).getBytes());
+		  
+    	 
+    	byte[] freeWaysInfoByte = redisService.get(("FreeWay_"+taskid+"_next_"+orderBy).getBytes());
     	if (freeWaysInfoByte!=null) {
     		SysActfreeWay ways = (SysActfreeWay)SerializeUtil.unserialize(freeWaysInfoByte);
     		return ways;
     	}else {
     		setFreeWaysByTaskId(taskid);
-    		freeWaysInfoByte = jedis.get(("FreeWay_"+taskid+"_next_"+orderBy).getBytes());
+    		freeWaysInfoByte = redisService.get(("FreeWay_"+taskid+"_next_"+orderBy).getBytes());
     		if (freeWaysInfoByte!=null) {
         		SysActfreeWay ways = (SysActfreeWay)SerializeUtil.unserialize(freeWaysInfoByte);
         		return ways;
@@ -3082,15 +3074,15 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public SysActfreeWay getNowFreeWayByTOId(String taskid,String orderBy){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeWaysInfoByte = jedis.get(("FreeWay_"+taskid+"_now_"+orderBy).getBytes());
+		  
+    	 
+    	byte[] freeWaysInfoByte = redisService.get(("FreeWay_"+taskid+"_now_"+orderBy).getBytes());
     	if (freeWaysInfoByte!=null) {
     		SysActfreeWay ways = (SysActfreeWay)SerializeUtil.unserialize(freeWaysInfoByte);
     		return ways;
     	}else {
     		setFreeWaysByTaskId(taskid);
-    		freeWaysInfoByte = jedis.get(("FreeWay_"+taskid+"_now_"+orderBy).getBytes());
+    		freeWaysInfoByte = redisService.get(("FreeWay_"+taskid+"_now_"+orderBy).getBytes());
     		if (freeWaysInfoByte!=null) {
         		SysActfreeWay ways = (SysActfreeWay)SerializeUtil.unserialize(freeWaysInfoByte);
         		return ways;
@@ -3102,9 +3094,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public List<SysActfreeWay> getFreeWaysByTaskId(String taskid){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeWaysInfoByte = jedis.get(("FreeWay_"+taskid).getBytes());
+		  
+    	 
+    	byte[] freeWaysInfoByte = redisService.get(("FreeWay_"+taskid).getBytes());
     	if (freeWaysInfoByte!=null) {
     		List<SysActfreeWay> ways = (List<SysActfreeWay>)SerializeUtil.unserializeList(freeWaysInfoByte);
     		return ways;
@@ -3114,7 +3106,7 @@ public class SysformconfigService implements   ISysformconfigService {
     		example.setOrderByClause("ORDERBY");
     		List<SysActfreeWay> ways = sysActfreeWayMapper.selectByExample(example);
     		if (ways.size()>0) {
-    			jedis.set(("FreeWay_"+taskid).getBytes(), SerializeUtil.serializeList(ways));
+    			redisService.set(("FreeWay_"+taskid).getBytes(), SerializeUtil.serializeList(ways));
     		}
     		return ways;
 		}
@@ -3122,12 +3114,12 @@ public class SysformconfigService implements   ISysformconfigService {
 	@Override
 	public void setActfreeTask(String taskId) {
 		SysActfreeTask task = sysActfreeTaskMapper.selectByPrimaryKey(taskId);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
     	if (task!=null) {
-    		jedis.set(("FreeActTask_"+taskId).getBytes(), SerializeUtil.serialize(task));
+    		redisService.set(("FreeActTask_"+taskId).getBytes(), SerializeUtil.serialize(task));
 		}else {
-			jedis.del(("FreeActTask_"+taskId).getBytes());
+			redisService.del(("FreeActTask_"+taskId).getBytes());
 		}
     	//sysActFreeTask载入缓存
     	SysActfreeTaskExample example = new SysActfreeTaskExample();
@@ -3135,9 +3127,9 @@ public class SysformconfigService implements   ISysformconfigService {
     	example.setOrderByClause("ACTCODE");
     	List<SysActfreeTask> tasks = sysActfreeTaskMapper.selectByExample(example);
     	if (tasks!=null&&tasks.size()>0) {
-    		jedis.set(("FreeActTaskMaxCode_"+task.getModelkey()).getBytes(), SerializeUtil.serialize(tasks.get(tasks.size()-1)));
+    		redisService.set(("FreeActTaskMaxCode_"+task.getModelkey()).getBytes(), SerializeUtil.serialize(tasks.get(tasks.size()-1)));
     	}else {
-    		jedis.del(("FreeActTaskMaxCode_"+task.getModelkey()).getBytes());
+    		redisService.del(("FreeActTaskMaxCode_"+task.getModelkey()).getBytes());
 		}
     	//sysActFreeHis载入缓存
     	SysActfreeHisExample example2 = new SysActfreeHisExample();
@@ -3145,17 +3137,17 @@ public class SysformconfigService implements   ISysformconfigService {
     	example2.setOrderByClause("STARTTIME");
     	List<SysActfreeHis> his = sysActfreeHisMapper.selectByExample(example2);
     	if (his!=null&&his.size()>0) {
-    		jedis.set(("FreeActTaskHis_"+taskId).getBytes(), SerializeUtil.serializeList(his));
+    		redisService.set(("FreeActTaskHis_"+taskId).getBytes(), SerializeUtil.serializeList(his));
     	}else {
-    		jedis.del(("FreeActTaskHis_"+taskId).getBytes());
+    		redisService.del(("FreeActTaskHis_"+taskId).getBytes());
 		}
 	}
 	
 	@Override
 	public List<SysActfreeHis> getFreeActHisByTaskid(String taskId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeTaskInfoByte = jedis.get(("FreeActTaskHis_"+taskId).getBytes());
+		  
+    	 
+    	byte[] freeTaskInfoByte = redisService.get(("FreeActTaskHis_"+taskId).getBytes());
     	if (freeTaskInfoByte!=null) {
     		List<SysActfreeHis> his = (List<SysActfreeHis>) SerializeUtil.unserializeList(freeTaskInfoByte);
     		return his;
@@ -3165,9 +3157,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	    	example2.setOrderByClause("STARTTIME");
 	    	List<SysActfreeHis> his = sysActfreeHisMapper.selectByExample(example2);
 	    	if (his!=null&&his.size()>0) {
-	    		jedis.set(("FreeActTaskHis_"+taskId).getBytes(), SerializeUtil.serializeList(his));
+	    		redisService.set(("FreeActTaskHis_"+taskId).getBytes(), SerializeUtil.serializeList(his));
 	    	}else {
-	    		jedis.del(("FreeActTaskHis_"+taskId).getBytes());
+	    		redisService.del(("FreeActTaskHis_"+taskId).getBytes());
 			}
 			return (List<SysActfreeHis>) SerializeUtil.unserializeList(freeTaskInfoByte);
 		}
@@ -3175,9 +3167,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public SysActfreeTask getFreeActTaskMaxCode(String modelKey) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeTaskInfoByte = jedis.get(("FreeActTaskMaxCode_"+modelKey).getBytes());
+		  
+    	 
+    	byte[] freeTaskInfoByte = redisService.get(("FreeActTaskMaxCode_"+modelKey).getBytes());
     	if (freeTaskInfoByte!=null) {
     		SysActfreeTask task = (SysActfreeTask) SerializeUtil.unserialize(freeTaskInfoByte);
     		return task;
@@ -3187,10 +3179,10 @@ public class SysformconfigService implements   ISysformconfigService {
 	    	example.setOrderByClause("ACTCODE");
 	    	List<SysActfreeTask> tasks = sysActfreeTaskMapper.selectByExample(example);
 	    	if (tasks!=null&&tasks.size()>0) {
-	    		jedis.set(("FreeActTaskMaxCode_"+modelKey).getBytes(), SerializeUtil.serialize(tasks.get(tasks.size()-1)));
-	    		freeTaskInfoByte = jedis.get(("FreeActTaskMaxCode_"+modelKey).getBytes());
+	    		redisService.set(("FreeActTaskMaxCode_"+modelKey).getBytes(), SerializeUtil.serialize(tasks.get(tasks.size()-1)));
+	    		freeTaskInfoByte = redisService.get(("FreeActTaskMaxCode_"+modelKey).getBytes());
 	    	}else {
-	    		jedis.del(("FreeActTaskMaxCode_"+modelKey).getBytes());
+	    		redisService.del(("FreeActTaskMaxCode_"+modelKey).getBytes());
 			}
 			return (SysActfreeTask) SerializeUtil.unserialize(freeTaskInfoByte);
 		}
@@ -3199,34 +3191,34 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public SysActfreeTask getActfreeTask(String taskId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeTaskInfoByte = jedis.get(("FreeActTask_"+taskId).getBytes());
+		  
+    	 
+    	byte[] freeTaskInfoByte = redisService.get(("FreeActTask_"+taskId).getBytes());
     	if (freeTaskInfoByte!=null) {
     		SysActfreeTask task = (SysActfreeTask) SerializeUtil.unserialize(freeTaskInfoByte);
     		return task;
 		}else {
 			SysActfreeTask task = sysActfreeTaskMapper.selectByPrimaryKey(taskId);
 	    	if (task!=null) {
-	    		jedis.set(("FreeActTask_"+taskId).getBytes(), SerializeUtil.serialize(task));
-	    		freeTaskInfoByte = jedis.get(("FreeActTask_"+taskId).getBytes());
+	    		redisService.set(("FreeActTask_"+taskId).getBytes(), SerializeUtil.serialize(task));
+	    		freeTaskInfoByte = redisService.get(("FreeActTask_"+taskId).getBytes());
 			}else {
-				jedis.del(("FreeActTask_"+taskId).getBytes());
+				redisService.del(("FreeActTask_"+taskId).getBytes());
 			}
 	    	return (SysActfreeTask) SerializeUtil.unserialize(freeTaskInfoByte);
 		}
 	}
 	@Override
 	public SysActfreeConduct getActFreeConductByTaskId(String taskId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeConductInfoByte = jedis.get(("FreeConduct_"+taskId).getBytes());
+		  
+    	 
+    	byte[] freeConductInfoByte = redisService.get(("FreeConduct_"+taskId).getBytes());
     	if (freeConductInfoByte!=null) {
     		SysActfreeConduct task = (SysActfreeConduct) SerializeUtil.unserialize(freeConductInfoByte);
     		return task;
 		}else {
 			setActFreeConductByTaskId(taskId);
-			freeConductInfoByte = jedis.get(("FreeConduct_"+taskId).getBytes());
+			freeConductInfoByte = redisService.get(("FreeConduct_"+taskId).getBytes());
 			if (freeConductInfoByte!=null) {
 	    		SysActfreeConduct task = (SysActfreeConduct) SerializeUtil.unserialize(freeConductInfoByte);
 	    		return task;
@@ -3237,9 +3229,9 @@ public class SysformconfigService implements   ISysformconfigService {
 	}
 	@Override
 	public List<SysActfreeConduct> getActFreeConductByUserId(String userId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeConductInfoByte = jedis.get(("FreeConducts_USERID_"+userId).getBytes());
+		  
+    	 
+    	byte[] freeConductInfoByte = redisService.get(("FreeConducts_USERID_"+userId).getBytes());
     	if (freeConductInfoByte!=null) {
     		List<SysActfreeConduct> conducts = (List<SysActfreeConduct>) SerializeUtil.unserializeList(freeConductInfoByte);
     		return conducts;
@@ -3248,8 +3240,8 @@ public class SysformconfigService implements   ISysformconfigService {
         	example2.or().andAssigneeEqualTo(userId);
         	List<SysActfreeConduct> conducts2 = sysActfreeConductMapper.selectByExample(example2);
         	if (conducts2!=null&&conducts2.size()>0) {
-        		jedis.set(("FreeConducts_USERID_"+userId).getBytes(), SerializeUtil.serializeList(conducts2));
-        		freeConductInfoByte = jedis.get(("FreeConducts_USERID_"+userId).getBytes());
+        		redisService.set(("FreeConducts_USERID_"+userId).getBytes(), SerializeUtil.serializeList(conducts2));
+        		freeConductInfoByte = redisService.get(("FreeConducts_USERID_"+userId).getBytes());
     		}
         	return (List<SysActfreeConduct>) SerializeUtil.unserializeList(freeConductInfoByte);
 		}
@@ -3259,29 +3251,29 @@ public class SysformconfigService implements   ISysformconfigService {
 		SysActfreeConductExample example = new SysActfreeConductExample();
 		example.or().andTaskidEqualTo(taskId);
 		List<SysActfreeConduct> conducts = sysActfreeConductMapper.selectByExample(example);
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
     	if (conducts!=null&&conducts.size()>0) {
-    		jedis.set(("FreeConduct_"+taskId).getBytes(), SerializeUtil.serialize(conducts.get(0)));
+    		redisService.set(("FreeConduct_"+taskId).getBytes(), SerializeUtil.serialize(conducts.get(0)));
     		SysActfreeConductExample example2 = new SysActfreeConductExample();
         	example2.or().andAssigneeEqualTo(conducts.get(0).getAssignee());
         	List<SysActfreeConduct> conducts2 = sysActfreeConductMapper.selectByExample(example2);
         	if (conducts2!=null) {
-        		jedis.set(("FreeConducts_USERID_"+conducts.get(0).getAssignee()).getBytes(), SerializeUtil.serializeList(conducts2));
+        		redisService.set(("FreeConducts_USERID_"+conducts.get(0).getAssignee()).getBytes(), SerializeUtil.serializeList(conducts2));
     		}else {
-    			jedis.del(("FreeConducts_USERID_"+conducts.get(0).getAssignee()).getBytes());
+    			redisService.del(("FreeConducts_USERID_"+conducts.get(0).getAssignee()).getBytes());
     		}
 		}else {
-			jedis.del(("FreeConduct_"+taskId).getBytes());
+			redisService.del(("FreeConduct_"+taskId).getBytes());
 		}
     	
 	}
 
 	@Override
 	public SysActfreeModel getSysActfreeModelBytaskId(String taskid) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] freeMoldeInfoByte = jedis.get(("FreeModel"+taskid).getBytes());
+		  
+    	 
+    	byte[] freeMoldeInfoByte = redisService.get(("FreeModel"+taskid).getBytes());
     	if (freeMoldeInfoByte!=null) {
     		SysActfreeModel model = (SysActfreeModel) SerializeUtil.unserialize(freeMoldeInfoByte);
     		return model;
@@ -3293,9 +3285,9 @@ public class SysformconfigService implements   ISysformconfigService {
 				example.or().andModelkeyEqualTo(modelKey);
 				List<SysActfreeModel> models = sysActfreeModelMapper.selectByExample(example);
 				if (models!=null&&models.size()>0) {
-					jedis.set(("FreeModel"+taskid).getBytes(), SerializeUtil.serialize(models.get(0)));
+					redisService.set(("FreeModel"+taskid).getBytes(), SerializeUtil.serialize(models.get(0)));
 				} else {
-					jedis.del(("FreeModel"+taskid).getBytes());
+					redisService.del(("FreeModel"+taskid).getBytes());
 				}
 				return (SysActfreeModel) SerializeUtil.unserialize(freeMoldeInfoByte);
 			}else {
@@ -3316,26 +3308,26 @@ public class SysformconfigService implements   ISysformconfigService {
 			map.put(sysSystemParam.getSysParamCode(), sysSystemParam);
 			systemParamMap.put(sysSystemParam.getSysParamCode(),sysSystemParam);
 		}
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	jedis.set(("sysSystemParam").getBytes(), SerializeUtil.serialize(map));
+		  
+    	 
+    	redisService.set(("sysSystemParam").getBytes(), SerializeUtil.serialize(map));
 	}
 
 	@Override
 	public SysFormTreeSolutionCache getTreeSolutionById(BigDecimal formTreeSolutionId) throws Exception {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] sysFormTreeSolutionInfoByte = jedis.get(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
+		  
+    	 
+    	byte[] sysFormTreeSolutionInfoByte = redisService.get(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
     	if (sysFormTreeSolutionInfoByte!=null) {
     		SysFormTreeSolutionCache solutionCache = (SysFormTreeSolutionCache) SerializeUtil.unserialize(sysFormTreeSolutionInfoByte);
     		return solutionCache;
 		}else {
 			SysFormTreeSolutionCache solutionCache = new SysFormTreeSolutionCache(formTreeSolutionId+"");
 			if (solutionCache!=null) {
-				jedis.set(("sysFormTreeSolution"+formTreeSolutionId).getBytes(), SerializeUtil.serialize(solutionCache));
+				redisService.set(("sysFormTreeSolution"+formTreeSolutionId).getBytes(), SerializeUtil.serialize(solutionCache));
 				return solutionCache;
 			}else {
-				jedis.del(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
+				redisService.del(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
 				return null;
 			}
 		}
@@ -3343,21 +3335,21 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public void setTreeSolutionById(BigDecimal formTreeSolutionId) throws Exception{
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
 		SysFormTreeSolutionCache solutionCache = new SysFormTreeSolutionCache(formTreeSolutionId+"");
 		if (solutionCache!=null) {
-			jedis.set(("sysFormTreeSolution"+formTreeSolutionId).getBytes(), SerializeUtil.serialize(solutionCache));
+			redisService.set(("sysFormTreeSolution"+formTreeSolutionId).getBytes(), SerializeUtil.serialize(solutionCache));
 		}else {
-			jedis.del(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
+			redisService.del(("sysFormTreeSolution"+formTreeSolutionId).getBytes());
 		}
 	}
 
 	@Override
 	public Map getChartConfigByformId(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	byte[] chartConfigInfoByte = jedis.get(("chartConfig"+formId).getBytes());
+		  
+    	 
+    	byte[] chartConfigInfoByte = redisService.get(("chartConfig"+formId).getBytes());
     	Map map = new HashMap();
     	if (chartConfigInfoByte!=null) {
 		}else {
@@ -3365,11 +3357,11 @@ public class SysformconfigService implements   ISysformconfigService {
 			example.or().andTemplateColumnFormDefIdEqualTo(Integer.valueOf(formId));
 			List<SysGridbycardTemplateColumn> columns = gridbycardTemplateColumnMapper.selectByExample(example);
 			if (columns!=null&&columns.size()>0) {
-				jedis.set(("chartConfig"+formId).getBytes(), SerializeUtil.serializeList(columns));
+				redisService.set(("chartConfig"+formId).getBytes(), SerializeUtil.serializeList(columns));
 			} else {
-				jedis.del(("chartConfig"+formId).getBytes());
+				redisService.del(("chartConfig"+formId).getBytes());
 			}
-			chartConfigInfoByte = jedis.get(("chartConfig"+formId).getBytes());
+			chartConfigInfoByte = redisService.get(("chartConfig"+formId).getBytes());
 		}
     	List<SysGridbycardTemplateColumn> columns = (List<SysGridbycardTemplateColumn>) SerializeUtil.unserializeList(chartConfigInfoByte);
     	for (SysGridbycardTemplateColumn sysGridbycardTemplateColumn : columns) {
@@ -3380,37 +3372,37 @@ public class SysformconfigService implements   ISysformconfigService {
 	
 	@Override
 	public void setChartConfigByformId(String formId) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
+		  
+    	 
     	Map map = new HashMap();
 		SysGridbycardTemplateColumnExample example = new SysGridbycardTemplateColumnExample();
 		example.or().andTemplateColumnFormDefIdEqualTo(Integer.valueOf(formId));
 		List<SysGridbycardTemplateColumn> columns = gridbycardTemplateColumnMapper.selectByExample(example);
 		if (columns!=null&&columns.size()>0) {
-			jedis.set(("chartConfig"+formId).getBytes(), SerializeUtil.serializeList(columns));
+			redisService.set(("chartConfig"+formId).getBytes(), SerializeUtil.serializeList(columns));
 		} else {
-			jedis.del(("chartConfig"+formId).getBytes());
+			redisService.del(("chartConfig"+formId).getBytes());
 		}
 	}
 	
 	@Override
 	public void setEmpPhotoByUserId(String empId, String photoPath) {
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+		  
+    	
         SysUserExample example = new SysUserExample();
         example.or().andEmpIdEqualTo(Integer.valueOf(empId));
         SysUser user = userMapper.selectByExample(example).get(0);
         user.setHead(photoPath);
         userMapper.updateByPrimaryKey(user);
     	user.setHead(photoPath);
-    	jedis.set(("userForPhoto_"+empId).getBytes(), SerializeUtil.serialize(user));
+    	redisService.set(("userForPhoto_"+empId).getBytes(), SerializeUtil.serialize(user));
 	}
 	
 	@Override
 	public String getEmpPhotoByUserId(String empId){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
-    	byte[] empPhotoInfoByte = jedis.get(("userForPhoto_"+empId).getBytes());
+		  
+    	
+    	byte[] empPhotoInfoByte = redisService.get(("userForPhoto_"+empId).getBytes());
     	if (empPhotoInfoByte!=null) {
     		SysUser user = (SysUser) SerializeUtil.unserialize(empPhotoInfoByte);
     		return user.getHead();
@@ -3418,7 +3410,7 @@ public class SysformconfigService implements   ISysformconfigService {
 			SysUserExample example = new SysUserExample();
 			example.or().andEmpIdEqualTo(Integer.valueOf(empId));
 			SysUser user = userMapper.selectByExample(example).get(0);
-	    	jedis.set(("userForPhoto_"+empId).getBytes(), SerializeUtil.serialize(user));
+	    	redisService.set(("userForPhoto_"+empId).getBytes(), SerializeUtil.serialize(user));
 			return user.getHead();
 		}
 	}

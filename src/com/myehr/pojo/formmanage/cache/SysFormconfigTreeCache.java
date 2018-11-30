@@ -141,7 +141,7 @@ public class SysFormconfigTreeCache implements Serializable {
 			url = tree.getFormTreeUrl();
 		}else {
 			 //if(!"true".equals(this.tree.getFormIsLazy())){
-				 paramStr +="&params="+SysTreeFormBeansUtil.getUrlParamStr(this.solution, request) ;
+				 paramStr +="&params=\"+encodeURI(\""+SysTreeFormBeansUtil.getUrlParamStr(this.solution, request)+"\")+\"" ;
 			 //}
 			 url =SysTreeFormBeansUtil.DATA_LOADER_URL;
 		}

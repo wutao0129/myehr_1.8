@@ -136,27 +136,7 @@
 	<!--  手动获取bean -->
 	<bean class="com.myehr.common.util.SpringContextUtils" />
 	
-	<!--  redis缓存 -->
-	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">    
-	    <property name="maxActive"  value="50" />    
-	    <property name="maxIdle" value="10" />    
-	    <property name="maxWait" value="1000" />    
-	    <property name="testOnBorrow"  value="true"/>    
-	</bean>    
-	    
-	<bean id="jedis.shardInfo" class="redis.clients.jedis.JedisShardInfo">    
-	    <constructor-arg index="0" value="192.168.1.123" />    
-	    <constructor-arg index="1" value="6379" />    
-	</bean>    
-	    
-	<bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool">    
-	    <constructor-arg index="0" ref="jedisPoolConfig" />    
-	    <constructor-arg index="1">    
-	        <list>    
-	            <ref bean="jedis.shardInfo" />    
-	        </list>    
-	    </constructor-arg>    
-	</bean>   
+	
 	
 	
 </beans>

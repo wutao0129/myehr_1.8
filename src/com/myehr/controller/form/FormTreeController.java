@@ -26,7 +26,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import com.myehr.common.mybatis.MybatisUtil;
 import com.myehr.common.mybatis.Pager;
 import com.myehr.common.util.ChangeCode;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.SerializeUtil;
 import com.myehr.controller.dict.param.ResultMapNew;
 import com.myehr.controller.form.parambean.CardformInitDataParams;
@@ -54,6 +53,7 @@ import com.myehr.pojo.formmanage.form.SysTreeSolution;
 import com.myehr.pojo.formmanage.form.SysTreeSolutionColumn;
 import com.myehr.pojo.formmanage.form.SysTreeSolutionColumnExample;
 import com.myehr.pojo.formmanage.form.SysTreeSolutionExample;
+import com.myehr.service.RedisService;
 import com.myehr.service.formmanage.form.ISysformconfigService;
 import com.myehr.test.dao.TMapperExt;
 
@@ -84,6 +84,10 @@ public class FormTreeController {
 //	@Autowired
 	@Resource(name = "TMapperExt")
 	private TMapperExt tMapperExt;
+	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
 
 	@Autowired ISysformconfigService sysformconfigService;
 	
@@ -379,10 +383,9 @@ public class FormTreeController {
 			e.printStackTrace();logger.error(e.getMessage(),e);
 		}
 		
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis();
+	
 		if(datas!=null&&datas.size()>0){
-	    	jedis.set(("SysTreeSolution_"+treeSolutionId).getBytes(), SerializeUtil.serializeList(datas));
+			redisService.set(("SysTreeSolution_"+treeSolutionId).getBytes(), SerializeUtil.serializeList(datas));
 		}
 			
 		return reCode;

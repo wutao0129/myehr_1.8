@@ -26,8 +26,8 @@
 		<property name="idGenerator" ref="idGen" /> 
 		
 		<!-- 生成流程图的字体 -->
-		<property name="activityFontName" value="${activiti.diagram.activityFontName}"/>
-		<property name="labelFontName" value="${activiti.diagram.labelFontName}"/>
+		<property name="activityFontName" value="宋体"/>
+		<property name="labelFontName" value="宋体"/>
 		<!-- <property name="annotationFontName" value="${activiti.diagram.annotationFontName}"/> --><!-- 5.21.0 新增参数 -->
 		
 		<!-- 自定义用户权限 ，必须重新实现用户和组的相应方法-->

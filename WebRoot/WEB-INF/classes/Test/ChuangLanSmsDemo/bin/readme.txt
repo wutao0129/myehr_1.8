@@ -1,4 +1,4 @@
-
+﻿
 # 创蓝云通讯  Java sdk 使用说明 
 /*************** demo类 ****************************/
 
@@ -22,7 +22,7 @@
 	
 	SmsSendRequest.java : 普通短信发送Entity 
 	
-	SmsVarableRequest.java :变量短信发送Entity 
+	SmsVariableRequest.java :变量短信发送Entity 
 	
 /*************** response 实体类  ****************************/
 
@@ -34,7 +34,7 @@
 	
 	SmsSendResponse.java : 普通短信发送Entity 
 	
-	SmsVarableResponse.java :变量短信发送Entity 
+	SmsVariableResponse.java :变量短信发送Entity 
 	
 目前 sdk 支持短信单发、群发、定时等功能，具体使用方式可参考创蓝的  demo 说明。
 

@@ -31,10 +31,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPoolConfig;
 
 import com.alibaba.fastjson.JSON;
-import com.myehr.common.app.login.tls_sigature;
-import com.myehr.common.app.login.tls_sigature.GenTLSSignatureResult;
-import com.myehr.common.app.login.tls_sigcheck;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.SerializeUtil;
 import com.myehr.mapper.sysuser.SysUserMapper;
 import com.myehr.pojo.formmanage.cache.SysFormconfigCache;
@@ -130,9 +126,9 @@ public static void main(String args[]) throws Exception {
 		//https://oapi.dingtalk.com/user/getuserinfo?access_token=ACCESS_TOKEN&code=CODE
 		String getinfo = "http://192.168.0.161:8081/myehr/FormCopy/cardFormCopyToOther.action?formId=3377";
 		byte[] sysFormInfoByte = (byte[])JSON.parse(httpsRequest(getinfo,"GET",null));
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
+	/*	JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
     	Jedis jedis = factory.getJedis();
-    	SysFormconfigCache formcache =(SysFormconfigCache) SerializeUtil.unserialize(sysFormInfoByte);
+    	SysFormconfigCache formcache =(SysFormconfigCache) SerializeUtil.unserialize(sysFormInfoByte);*/
         /*tls_sigcheck demo = new tls_sigcheck();
         // 使用前请修改动态库的加载路径
         demo.loadJniLib("E:\\work\\下载\\TLS后台API\\20151230\\tls_sig_api-windows-64\\lib\\jni\\jnisigcheck.dll");//windows

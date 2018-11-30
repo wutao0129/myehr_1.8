@@ -93,4 +93,26 @@
 	
 	<bean id="IComboBoxService" class="com.myehr.service.impl.formmanage.form.widget.ComboBoxServiceImpl" />
 	<bean id="TXIMService" class="com.myehr.service.impl.app.TXIMServiceImpy" />
+	
+	<!--  redis缓存 -->
+	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">    
+	    <property name="maxActive"  value="300" />    
+	    <property name="maxIdle" value="10" />    
+	    <property name="maxWait" value="1000" />    
+	    <property name="testOnBorrow"  value="true"/>    
+	</bean>    
+	<bean id="jedisPool"  class="redis.clients.jedis.JedisPool">
+		<constructor-arg name="poolConfig" ref="jedisPoolConfig" />
+		<constructor-arg name="host" value="172.17.0.3" />
+		<constructor-arg name="port" value="6379" type="int" />
+		<!-- <constructor-arg name="host" value="127.0.0.1" />
+		<constructor-arg name="port" value="10001" type="int" />  -->
+		
+		<constructor-arg name="timeout" value="20000"/>
+		
+	</bean>	
+	<bean id="RedisService" class="com.myehr.service.impl.RedisServiceImpl" >
+			<property name="jedisPool" ref="jedisPool"></property>  
+	</bean>
+	
 </beans>

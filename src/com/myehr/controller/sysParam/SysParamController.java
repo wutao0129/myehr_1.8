@@ -1,5 +1,6 @@
 package com.myehr.controller.sysParam;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.myehr.common.mybatis.Pager;
+import com.myehr.common.util.AuthorizationUtil;
 import com.myehr.common.util.GetDBPropertiesValue;
 import com.myehr.common.util.XmlUtil;
 import com.myehr.controller.dict.param.ResultMapNew;
@@ -188,8 +190,8 @@ public class SysParamController {
 		SysSource sysSource = sysSourceMapper.selectByExample(example).get(0);
 		
 		String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
-		path = path+"webapps/myehr/WEB-INF/classes/db.properties";
-		String path1 = "E:/109svn/myehrMssql/myehr_0_SQLSERVER/config/db.properties";
+		path = Thread.currentThread().getContextClassLoader().getResource("/").getPath()+"db.properties";
+		String path1 =  Thread.currentThread().getContextClassLoader().getResource("/").getPath()+File.separator+"db.properties";
 		GetDBPropertiesValue.writeProperties(path, sysSource.getSysSoruceDriver(),sysSource.getSysSoruceDriverValue());
 		GetDBPropertiesValue.writeProperties(path, sysSource.getSysSoruceUrl(),sysSource.getSysSoruceUrlValue());
 		GetDBPropertiesValue.writeProperties(path, sysSource.getSysSoruceUsername(),sysSource.getSysSoruceUsernameValue());

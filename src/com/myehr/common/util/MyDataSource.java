@@ -24,8 +24,8 @@ public class MyDataSource extends org.apache.commons.dbcp.BasicDataSource {
 		//C:/myehr_oracle/apache-tomcat-6.0.45/webapps/myehr/WEB-INF/classes139ORACLE
 		//E:/myehr/Myeclipse/myeclipse/apache-tomcat-6.0.45/webapps/myehr/WEB-INF/classes/
 		//C:/MyeHR_MSSQL/apache-tomcat-6.0.45/webapps/myehr/WEB-INF/classes
-		String path =  System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
-		path = path+"webapps/myehr/WEB-INF/classes/db.properties";
+		String path =   Thread.currentThread().getContextClassLoader().getResource("/").getPath() +"db.properties" ; //System.getProperty("user.dir").replace("\\", "/").replace("bin", "");
+		//path = path+"webapps/myehr/WEB-INF/classes/db.properties";
 
 		String url = GetDBPropertiesValue.readValue(path,"jdbc.url");
 		String driverClassName = GetDBPropertiesValue.readValue(path,"jdbc.driver");

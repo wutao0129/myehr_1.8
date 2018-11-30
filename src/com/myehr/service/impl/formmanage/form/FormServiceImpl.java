@@ -29,13 +29,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.myehr.common.mybatis.Pagers;
 import com.myehr.common.util.ChangeCode;
 import com.myehr.common.util.CreateFileUtil;
-import com.myehr.common.util.JedisFactory;
 import com.myehr.common.util.ResultMap;
 import com.myehr.mapper.formmanage.drag.SysFormDragconfigColumnMapper;
 import com.myehr.mapper.formmanage.drag.SysFormDragconfigExpandMapper;
@@ -147,6 +143,7 @@ import com.myehr.pojo.sysParam.SysRequestParam;
 import com.myehr.pojo.sysParam.SysSystemParam;
 import com.myehr.pojo.sysUserRole.SysUserRole;
 import com.myehr.pojo.sysUserRole.SysUserRoleExample;
+import com.myehr.service.RedisService;
 import com.myehr.service.field.FieldService;
 import com.myehr.service.formmanage.form.IFormService;
 import com.myehr.service.formmanage.form.ISysformconfigService;
@@ -263,6 +260,10 @@ public class FormServiceImpl implements IFormService{
 	SysUserRoleMapper userRoleMapper;
 	@Autowired
 	SysFileuploadConfigMapper fileuploadConfigMapper;
+	
+	@Autowired
+	@Resource(name = "RedisService")
+	private RedisService  redisService; 
 	
 	
 	@Override
@@ -476,7 +477,9 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1="E:/workspace/Myeclipse/myehr_17_2_19_Oracle/WebRoot/jsp/formbuild"+path11;
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
@@ -732,8 +735,10 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
 //			String path1="E:/workspace/Myeclipse/myehr_17_2_19_Oracle/WebRoot/jsp/formbuild"+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			//生成文件
@@ -988,7 +993,9 @@ public class FormServiceImpl implements IFormService{
 //			String path="E:/myeclipse/workspace1/myehr/WebRoot/jsp/formbuld";
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
 //			String path1="E:/myeclipse/workspace1/.metadata/.me_tcat/webapps/myehr/jsp/formbuld";
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//E:/workspace/Myeclipse/myehr_0_SQLSERVER/WebRoot/jsp/formbuild/
 			//生成文件
@@ -999,8 +1006,8 @@ public class FormServiceImpl implements IFormService{
 
 			SysFileuploadConfig config = form.getFileuploadConfig();
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -1221,7 +1228,9 @@ public class FormServiceImpl implements IFormService{
 //			String path="E:/myeclipse/workspace1/myehr/WebRoot/jsp/formbuld";
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
 //			String path1="E:/myeclipse/workspace1/.metadata/.me_tcat/webapps/myehr/jsp/formbuld";
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			
 			//生成文件
@@ -1231,8 +1240,8 @@ public class FormServiceImpl implements IFormService{
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -1512,7 +1521,7 @@ public class FormServiceImpl implements IFormService{
 					   SysCardFormBeansUtil.getNbsp(3)+"//这个async是插件封装的ajax\n"+
 					   SysCardFormBeansUtil.getNbsp(3)+"async: {\n"+
 					   SysCardFormBeansUtil.getNbsp(4)+"enable:true, // 需要异步加载\n"+
-					   SysCardFormBeansUtil.getNbsp(4)+"type:\"get\",\n"+
+					   SysCardFormBeansUtil.getNbsp(4)+"type:\"post\",\n"+
 					   SysCardFormBeansUtil.getNbsp(4)+"url:\""+form.getTree().getFormTreeUrl(request)+"\",//ajax的请求地址\n"+
 					   SysCardFormBeansUtil.getNbsp(4)+"autoParam:[\""+ChangeCode.getUniqueCode(entityName,treeId)+"\",\"level=lv\"], //传递的参数 id lv（层级，最开始是0）\n"+
 					   SysCardFormBeansUtil.getNbsp(4)+"dataFilter: filter\n"+
@@ -2101,7 +2110,9 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -2110,8 +2121,8 @@ public class FormServiceImpl implements IFormService{
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -2268,7 +2279,9 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -2277,9 +2290,9 @@ public class FormServiceImpl implements IFormService{
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -2515,14 +2528,15 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -2684,15 +2698,16 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -2978,15 +2993,16 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -3184,15 +3200,16 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -3448,15 +3465,16 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -3705,15 +3723,16 @@ public class FormServiceImpl implements IFormService{
 					logger.info(path11);
 					//获取文件路径和文件名
 					String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-					String path1 =  request.getPath()+"\\"+path11;
-					
+					String path1 =  request.getPath()+File.separator+path11;
+					path = path.replace("/",  File.separator);
+					path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 					CreateFileUtil.createDir(path);
 					CreateFileUtil.createDir(path1);
 					
 					try {  
-						File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-						File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-						File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+						File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+						File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+						File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 						if (f3.exists()) {  
 							System.out.print("文件存在");  
 						} else {  
@@ -3962,14 +3981,15 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
@@ -4210,7 +4230,9 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -4219,8 +4241,8 @@ public class FormServiceImpl implements IFormService{
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -5294,17 +5316,18 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			//String path="E:/workspace/Myeclipse/myehr_17_2_19/WebRoot/jsp/formbuild/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-			
+		
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			/*CreateFileUtil.createDir(path);*/
 			CreateFileUtil.createDir(path1);
 			
 			try {  
 				//File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				/*if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -5412,7 +5435,8 @@ public class FormServiceImpl implements IFormService{
 			logger.info(path11);
 			//获取文件路径和文件名
 			//String path="E:/workspace/Myeclipse/myehr_17_2_19/WebRoot/jsp/formbuild/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -5422,7 +5446,7 @@ public class FormServiceImpl implements IFormService{
 			
 			try {  
 				//File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				/*if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -5953,6 +5977,12 @@ return null;
 		        pageresponse.setTotal(total);  
 		        return pageresponse;
 	}
+	
+	public static void main(String[] args) {
+		String a = "a/b/c";
+		String f = File.separator;
+		System.out.println(a.replace("/", f));
+	}
 
 	@Override
 	public String buildTabsForm(SysFormconfigCache form,SysRequestParam request, String isApp) {
@@ -5982,15 +6012,17 @@ return null;
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_ORACLE/JSP/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+ File.separator+path11;
+			path = path.replace("/",  File.separator);
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+ File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+ File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f3 = new File(path1+ File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				
 				
 				if (f3.exists()) {  
@@ -6333,7 +6365,7 @@ return null;
 			sysFormconfigMapperExpand.updateSubmitUrl(map);
 			logger.info(path11);
 			String path = "C:/MyeHR/MyeHR_ORACLE/JSP/";
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			try {  
@@ -6431,7 +6463,8 @@ return null;
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1="E:/workspace/Myeclipse/myehr_17_2_19_Oracle/WebRoot/jsp/formbuild"+path11;
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
@@ -6965,7 +6998,8 @@ return null;
 //		String path="E:/myeclipse/workspace1/myehr/WebRoot/jsp/formbuld";
 		String path="C:/MyeHR/jsp/"+path11;
 //		String path1="E:/myeclipse/workspace1/.metadata/.me_tcat/webapps/myehr/jsp/formbuld";
-		String path1 =  request.getPath()+"\\"+path11;
+		String path1 =  request.getPath()+File.separator+path11;
+		path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //		String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 		
 		//生成文件
@@ -6974,8 +7008,8 @@ return null;
 		CreateFileUtil.createDir(path);
 		CreateFileUtil.createDir(path1);
 		try {  
-			File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-			File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+			File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+			File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 			if (f.exists()) {  
 				System.out.print("文件存在");  
 			} else {  
@@ -7396,14 +7430,14 @@ return null;
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_ORACLE/JSP/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+formM.getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+formM.getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+formM.getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+formM.getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -7440,10 +7474,10 @@ return null;
 			return null;
 	}
 	
-	public static void main(String[] args) {
-		FormServiceImpl ss = new FormServiceImpl();
-		ss.findFormColumnsByFormId(91);
-	}
+	//public static void main(String[] args) {
+	//	FormServiceImpl ss = new FormServiceImpl();
+		//ss.findFormColumnsByFormId(91);
+//	}
 
 	@Override
 	public ResultMap getExamtemplate(SysRequestParam request) {
@@ -7494,7 +7528,8 @@ return null;
 //			String path="E:/myeclipse/workspace1/myehr/WebRoot/jsp/formbuld";
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
 //			String path1="E:/myeclipse/workspace1/.metadata/.me_tcat/webapps/myehr/jsp/formbuld";
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
 			
 			//生成文件
@@ -7504,8 +7539,8 @@ return null;
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -7728,9 +7763,8 @@ return null;
 	 */
 	@Override
 	public String setColumnSqlDict(String columnName){
-		JedisFactory factory = new  JedisFactory( new  JedisPoolConfig());  
-    	Jedis jedis = factory.getJedis(); 
-    	String columnSqlDictDatas = jedis.get("columnSqlDictDatas"+columnName);
+		
+    	String columnSqlDictDatas = redisService.get("columnSqlDictDatas"+columnName);
     	if (columnSqlDictDatas!=null) {
     		return columnSqlDictDatas;
 		}else {
@@ -7746,7 +7780,7 @@ return null;
 				String str = sb.toString();
 				String str1 = str.substring(0, str.length()-1);
 				str1+="]";
-				jedis.set("columnSqlDictDatas"+columnName,str1);
+				redisService.set("columnSqlDictDatas"+columnName,str1);
 				return str1;
 			}else {
 				return null;
@@ -7804,9 +7838,9 @@ return null;
 //			String path="E:/myeclipse/workspace1/myehr/WebRoot/jsp/formbuld";
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
 //			String path1="E:/myeclipse/workspace1/.metadata/.me_tcat/webapps/myehr/jsp/formbuld";
-			String path1 =  request.getPath()+"\\"+path11;
+			String path1 =  request.getPath()+File.separator+path11;
 //			String path1= "E:/SqlServer/myeclipse/apache-tomcat-6.0.45/webapps/myehr/jsp/formbuild/"+path11;
-			
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			//生成文件
 			//SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 			
@@ -7814,8 +7848,8 @@ return null;
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -7865,7 +7899,7 @@ return null;
 			String path="E:/vueWork/github/mobile/src/myehrpath/form/"+path11;
 			CreateFileUtil.createDir(path);
 			try {  
-				File f = new File(path+"/"+formCache.getPojoform().getFormDefCode()+".vue");
+				File f = new File(path+File.separator+formCache.getPojoform().getFormDefCode()+".vue");
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -7907,7 +7941,7 @@ return null;
 			String path="E:/vueWork/github/mobile/src/myehrpath/form/"+path11;
 			CreateFileUtil.createDir(path);
 			try {  
-				File f = new File(path+"/"+formCache.getPojoform().getFormDefCode()+".vue");
+				File f = new File(path+File.separator+formCache.getPojoform().getFormDefCode()+".vue");
 				if (f.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -8072,15 +8106,15 @@ return null;
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
@@ -8273,15 +8307,15 @@ return null;
 			logger.info(path11);
 			//获取文件路径和文件名
 			String path="C:/MyeHR/MyeHR_MSSQL/jsp/"+path11;
-			String path1 =  request.getPath()+"\\"+path11;
-			
+			String path1 =  request.getPath()+File.separator+path11;
+			path1 = path1.replace("/", File.separator).replace(File.separator+File.separator, File.separator);
 			CreateFileUtil.createDir(path);
 			CreateFileUtil.createDir(path1);
 			
 			try {  
-				File f = new File(path+"/"+form.getPojoform().getFormDefCode()+".jsp");
-				File f1 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".jsp"); 
-				File f3 = new File(path1+"/"+form.getPojoform().getFormDefCode()+".js"); 
+				File f = new File(path+File.separator+form.getPojoform().getFormDefCode()+".jsp");
+				File f1 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".jsp"); 
+				File f3 = new File(path1+File.separator+form.getPojoform().getFormDefCode()+".js"); 
 				if (f3.exists()) {  
 					System.out.print("文件存在");  
 				} else {  
